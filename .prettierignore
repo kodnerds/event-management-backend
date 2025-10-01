@@ -1,0 +1,15 @@
+# Build outputs
+dist/
+build/
+
+# Dependencies
+node_modules/
+
+# Generated files
+*.generated.ts
+src/migrations/*
+coverage/
+
+# Specific files
+src/config/constants.ts
+README.md
