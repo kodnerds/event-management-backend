@@ -25,6 +25,8 @@
     "start": "ts-node dist/index.js",
     "typeorm": "typeorm-ts-node-commonjs",
     "prepare": "husky install",
-    "dev": "nodemon src/index.ts"
+    "dev": "nodemon src/index.ts",
+    "format": "prettier --write \"src/**/*.{ts,js,json,md}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,js,json,md}\""
   }
 }
