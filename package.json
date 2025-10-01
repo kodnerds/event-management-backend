@@ -4,6 +4,7 @@
   "description": "Awesome project developed with TypeORM.",
   "type": "commonjs",
   "devDependencies": {
+    "@commitlint/cli": "^20.1.0",
     "@commitlint/config-conventional": "^20.0.0",
     "@types/express": "^5.0.3",
     "@types/node": "^22.13.10",
@@ -24,7 +25,7 @@
     "build": "rimraf dist && tsc",
     "start": "ts-node dist/index.js",
     "typeorm": "typeorm-ts-node-commonjs",
-    "prepare": "husky install",
+    "prepare": "husky",
     "dev": "nodemon src/index.ts",
     "format": "prettier --write \"src/**/*.{ts,js,json,md}\"",
     "format:check": "prettier --check \"src/**/*.{ts,js,json,md}\""
