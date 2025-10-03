@@ -1,7 +1,7 @@
 import express from 'express';
 import { Request, Response } from 'express';
+import logger from "./utils/logger"
 import 'dotenv/config';
-
 const PORT = process.env.PORT || 3001;
 
 export const main = async () => {
@@ -14,7 +14,7 @@ export const main = async () => {
   });
 
   app.listen(PORT, () => {
-    console.info(`Server listening on port http://localhost:${PORT}`);
+    logger.info(`Server listening on port http://localhost:${PORT}`);
   });
 };
 
