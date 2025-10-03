@@ -6,4 +6,4 @@ tmp/
 temp/
 dist/
 .env
-.env.example
+logs/
