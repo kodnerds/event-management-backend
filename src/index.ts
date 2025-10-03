@@ -3,6 +3,7 @@ import express, { Request, Response } from 'express';
 import envConfig from './config/envConfig';
 import { AppDataSource } from './database';
 import appRoutes from './routes';
+import logger from './utils/logger';
 
 const PORT = envConfig.PORT;
 
@@ -26,8 +27,7 @@ export const main = async () => {
   app.use('/api/v1', appRoutes);
 
   app.listen(PORT, () => {
-    // eslint-disable-next-line no-console
-    console.info(`Server listening on port http://localhost:${PORT}`);
+    logger.info(`Server listening on port http://localhost:${PORT}`);
   });
 };
 
