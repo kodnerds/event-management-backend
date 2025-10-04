@@ -28,6 +28,10 @@
     "prepare": "husky",
     "dev": "nodemon src/index.ts",
     "format": "prettier --write \"src/**/*.{ts,js,json,md}\"",
-    "format:check": "prettier --check \"src/**/*.{ts,js,json,md}\""
+    "format:check": "prettier --check \"src/**/*.{ts,js,json,md}\"",
+    "docker:run-build": "docker compose up --build",
+    "docker:build": "docker compose build",
+    "docker:run": "docker compose up",
+    "docker:stop": "docker compose down"
   }
 }
