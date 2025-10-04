@@ -1,28 +1,35 @@
 services:
   api:
+    container_name: event-management-api
+    restart: unless-stopped
     build:
       context: .
-      target: development
-    container_name: event-management
-    ports:
-      - "${PORT}:9000"     
+      target: base
     env_file:
-      - .dev.env           
+      - .env
+    ports:
+        - ${PORT}:${PORT}
     volumes:
       - .:/app
       - /app/node_modules
     depends_on:
       - postgres
+    command: yarn run dev
 
   postgres:
-    image: postgres:latest
-    restart: always
+    container_name: event-management-postgres
+    image: postgres:16-alpine
+    restart: unless-stopped
     env_file:
-      - .dev.env             
+      - .env
     ports:
-      - "5432:5432"
+      - ${POSTGRES_PORT}:5432
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
 
 volumes:
-  pgdata:
+  postgres_data:
+
+networks:
+  event-management-network:
+    driver: bridge
