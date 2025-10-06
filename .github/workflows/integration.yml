@@ -36,5 +36,13 @@ jobs:
       - name: 🏗️ Build dist
         run: npm run build
 
-#      - name: 🧪 Run tests
-#        run: npm test
+      - name: 🧪 Run tests
+        env:
+          NODE_ENV: test
+          POSTGRES_DB: dummy
+          POSTGRES_USER: dummy
+          POSTGRES_PASSWORD: dummy
+          POSTGRES_HOST: dummy
+          POSTGRES_PORT: 1234
+          PORT: 3000
+        run: npm test
