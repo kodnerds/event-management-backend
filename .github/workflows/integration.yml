@@ -30,8 +30,8 @@ jobs:
       - name: 📝Check for formatting issues
         run: npm run format:check
 
-#      - name: 🕵️ Check for linting issues
-#        run: npm run lint
+      - name: 🕵️ Check for linting issues
+        run: npm run lint
 
       - name: 🏗️ Build dist
         run: npm run build
