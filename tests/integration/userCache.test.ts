@@ -9,8 +9,13 @@ describe('User caching (PostgreSQL + Redis)', () => {
     await AppDataSource.initialize();
 
     redisClient = createClient({
-      url: `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`,
+        socket: {
+        host: process.env.REDIS_HOST,
+        port: Number(process.env.REDIS_PORT),
+      },
     });
+
+    redisClient.on('error', (err) => console.error('Redis error:', err));
     await redisClient.connect();
   });
 
@@ -27,10 +32,11 @@ describe('User caching (PostgreSQL + Redis)', () => {
 
     await redisClient.set(`user:${newUser.id}`, JSON.stringify(newUser));
 
-    const cached = await redisClient.get(`user:${newUser.id}`);
+    const cached = (await redisClient.get(`user:${newUser.id}`)) as string | null;
+
     const parsed = cached ? JSON.parse(cached) : null;
 
     expect(parsed).toBeDefined();
-    expect(parsed.email).toBe('jane@example.com');
+    expect(parsed.firstName).toBe('Craven');
   });
 });

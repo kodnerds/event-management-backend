@@ -7,7 +7,7 @@ let postgres:StartedPostgreSqlContainer;
 let redis: StartedRedisContainer;
 
 export default async function globalSetup() {
-    console.log('🚀 Starting Testcontainers...');
+    console.log('Starting Testcontainers...');
 
     postgres = await new PostgreSqlContainer('postgres:16-alpine')
         .withDatabase('testdb')
@@ -20,9 +20,9 @@ export default async function globalSetup() {
     const testEnv = {
         TYPEORM_HOST: postgres.getHost(),
         TYPEORM_PORT: postgres.getPort().toString(),
-        TYPEORM_USERNAME: 'test',
-        TYPEORM_PASSWORD: 'test',
-        TYPEORM_DATABASE: 'test',
+        TYPEORM_USERNAME: 'testuser',
+        TYPEORM_PASSWORD: 'testpass',
+        TYPEORM_DATABASE: 'testdb',
         REDIS_HOST: redis.getHost(),
         REDIS_PORT: redis.getPort().toString()
     };
@@ -36,5 +36,7 @@ export default async function globalSetup() {
     );
 
     console.log('PostgresSQL and Redis TestContainer started');
+    console.log('.test.env written with:', testEnv);
+
     (global as any).__TEST_CONTAINER__ = {postgres,redis};
 }

@@ -7,3 +7,6 @@ temp/
 dist/
 .env
 .env.example
+.test.env
+old.ts
+coverage
