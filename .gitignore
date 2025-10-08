@@ -7,3 +7,4 @@ temp/
 dist/
 .env
 logs/
+*.log
