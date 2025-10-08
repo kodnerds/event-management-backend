@@ -1,9 +1,20 @@
 import express, { Request, Response } from 'express';
-import 'dotenv/config';
 
-const PORT = process.env.PORT ?? 3001;
+import envConfig from './config/envConfig';
+import { AppDataSource } from './database';
+import appRoutes from './routes';
 
-export const main = () => {
+const PORT = envConfig.PORT;
+
+export const main = async () => {
+  try {
+    await AppDataSource.initialize();
+    // eslint-disable-next-line no-console
+    console.info('Database connection established successfully 🚀');
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Failed to initialize AppDataSource:', error);
+  }
   const app = express();
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
@@ -12,10 +23,16 @@ export const main = () => {
     res.send({ message: 'Welcome to Event management API' })
   );
 
+  app.use('/api/v1', appRoutes);
+
   app.listen(PORT, () => {
     // eslint-disable-next-line no-console
     console.info(`Server listening on port http://localhost:${PORT}`);
   });
 };
 
-main();
+main().catch((error) => {
+  // eslint-disable-next-line no-console
+  console.error('Failed to start server:', error);
+  process.exit(1);
+});

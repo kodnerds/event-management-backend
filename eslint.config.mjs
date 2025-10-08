@@ -24,7 +24,7 @@ export default tseslint.config(
       },
       parser: tseslint.parser,
       parserOptions: {
-        project: './tsconfig.json',
+        project: ['./tsconfig.json', './test/tsconfig.json'],
         ecmaVersion: 'latest',
         sourceType: 'module'
       }
@@ -189,6 +189,13 @@ export default tseslint.config(
     }
   },
   {
-    ignores: ['dist/**', 'node_modules/**', '*.config.js', '*.config.mjs', 'commitlint.config.js']
+    ignores: [
+      'dist/**',
+      'node_modules/**',
+      '*.config.js',
+      '*.config.mjs',
+      'commitlint.config.js',
+      'jest.config.ts'
+    ]
   }
 );
