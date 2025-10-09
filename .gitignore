@@ -8,3 +8,4 @@ dist/
 .env
 logs/
 *.log
+.env.example
