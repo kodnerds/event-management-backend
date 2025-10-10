@@ -1,7 +1,9 @@
-import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
-
-import { PostgresConfig, setupPostgresContainer } from './testcontainer';
 import { testDatabaseConfig } from '../../src/database';
+
+import { setupPostgresContainer } from './testcontainer';
+
+import type { PostgresConfig } from './testcontainer';
+import type { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 
 const postgresConfig = testDatabaseConfig as PostgresConnectionOptions;
 

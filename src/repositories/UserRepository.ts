@@ -1,7 +1,7 @@
-import { Repository } from 'typeorm';
-
 import { handleGetRepository } from '../database';
 import { UserEntity } from '../entities';
+
+import type { Repository } from 'typeorm';
 
 export class UserRepository {
   private repository: Repository<UserEntity>;
