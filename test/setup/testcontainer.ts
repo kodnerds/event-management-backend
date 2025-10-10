@@ -1,4 +1,6 @@
-import { PostgreSqlContainer, StartedPostgreSqlContainer } from '@testcontainers/postgresql';
+import { PostgreSqlContainer } from '@testcontainers/postgresql';
+
+import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 
 export interface PostgresConfig {
   username: string;

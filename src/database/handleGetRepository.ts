@@ -1,7 +1,8 @@
-import { EntityTarget, ObjectLiteral, Repository } from 'typeorm';
+import envConfig from '../config/envConfig';
 
 import { AppDataSource, TestDataSource } from './data-source';
-import envConfig from '../config/envConfig';
+
+import type { EntityTarget, ObjectLiteral, Repository } from 'typeorm';
 
 export const handleGetRepository = <T extends ObjectLiteral>(
   entity: EntityTarget<T>
