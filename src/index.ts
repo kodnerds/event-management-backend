@@ -1,4 +1,5 @@
 import express from 'express';
+import morgan from 'morgan';
 
 import envConfig from './config/envConfig';
 import { AppDataSource } from './database';
@@ -19,12 +20,13 @@ export const main = async () => {
   const app = express();
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
+  app.use(morgan('dev'))
 
   app.get('/', (_: Request, res: Response) =>
     res.send({ message: 'Welcome to Event management API' })
   );
 
-  app.use('/api/v1', appRoutes);
+  app.use('/api/v1/', appRoutes);
 
   app.listen(PORT, () => {
     logger.info(`Server listening on port http://localhost:${PORT}`);

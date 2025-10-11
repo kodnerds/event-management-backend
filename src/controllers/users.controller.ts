@@ -1,7 +1,9 @@
 import { UserRepository } from '../repositories/UserRepository';
+import { hashPassword } from "../utils/hash";
 import logger from '../utils/logger';
 
 import type { Request, Response } from 'express';
+
 
 export const getUsers = async (_: Request, res: Response) => {
   try {
@@ -15,13 +17,33 @@ export const getUsers = async (_: Request, res: Response) => {
 };
 
 export const createUser = async (req: Request, res: Response) => {
-  const { firstName, lastName, age } = req.body;
   try {
     const userRepository = new UserRepository();
-    const data = await userRepository.create({ firstName, lastName, age });
-    return res.status(201).send({ message: 'User created successfully', data });
+    const { firstName, lastName, email, password} = req.body;
+
+    if (!firstName || !lastName || !email || !password) {
+         return errorResponse(res,400,"Firstname,lastname,email and password are required")
+    }
+
+    const existingUser = await userRepository.findByEmail(email)
+    if (existingUser) {
+      return errorResponse(res,409,"Email already exists");
+    }
+
+    const hashed = await hashPassword(password);
+    const newUser = await userRepository.create({
+         firstName,lastName,email,
+         password:hashed,
+         role:UserRole.USER
+     })
+
+    return successResponse(res,201,"User created successfully",{
+      id:newUser.id,
+      name:`${newUser.firstName} ${newUser.lastName}`,
+      role:newUser.role,
+    })
   } catch (error) {
-    logger.error('Error creating user:', error);
-    return res.status(500).send({ message: 'Error creating user' });
+    logger.error('Error creating users:', error);
+    return errorResponse(res,500,"Internal server error")
   }
 };
