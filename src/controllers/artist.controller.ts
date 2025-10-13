@@ -1,0 +1,43 @@
+import { Request, Response } from "express";
+import bcrypt from "bcrypt";
+
+import { ArtistRepository } from '../repositories/ArtistRepository'
+
+export const createArtist = async (req: Request, res: Response) => {
+  try {
+    const { name, email, password, genre, bio } = req.body;
+
+    const artistRepository = new ArtistRepository
+
+    const existingArtist = await artistRepository.findOne({
+      where: { email },
+      select: ["id"],
+    });
+    if (existingArtist) {
+      return res.status(409).json({ message: "Email already exists." });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newArtist = await artistRepository.create({
+      name,
+      email,
+      password: hashedPassword,
+      genre,
+      bio: bio || "",
+    });
+
+    const savedArtist = await artistRepository.save(newArtist);
+
+    return res.status(201).json({
+      message: "Artist created successfully",
+      data: {
+        id: savedArtist.id,
+        name: savedArtist.name,
+      },
+    });
+  } catch (error) {
+    console.error("Signup Error:", error);
+    return res.status(500).json({ message: "Server error." });
+  }
+}
