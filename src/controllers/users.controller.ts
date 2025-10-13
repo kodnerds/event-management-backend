@@ -19,8 +19,7 @@ export const getUsers = async (_: Request, res: Response) => {
 export const createUser = async (req: Request, res: Response) => {
   try {
     const userRepository = new UserRepository();
-    const { firstName, lastName, email, password} = req.body;
-
+    const { firstName, lastName, email, password,role} = req.body;
     if (!firstName || !lastName || !email || !password) {
          return errorResponse(res,400,"Firstname,lastname,email and password are required")
     }
@@ -34,7 +33,7 @@ export const createUser = async (req: Request, res: Response) => {
     const newUser = await userRepository.create({
          firstName,lastName,email,
          password:hashed,
-         role:UserRole.USER
+         role:role ?? UserRole.USER
      })
 
     return successResponse(res,201,"User created successfully",{

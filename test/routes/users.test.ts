@@ -6,6 +6,7 @@ const mockUsers = {
     firstName: 'Alice',
     lastName: 'Ruso',
     email: "alice@example.com",
+    password: "strongpass",
     role: "ADMIN"
   },
   clown: {
@@ -75,16 +76,14 @@ describe('Users routes', () => {
     });
   });
 
-  describe('POST /users', () => {
+  describe('POST /signup', () => {
     it('should create a new user with user role', async () => {
       const res = await factory.app.post(CREATE_ROUTE).send(mockUsers.jim);
 
       expect(res.status).toBe(201);
-      expect(res.body).toMatchObject({
-        message: 'User created successfully',
-        data: mockUsers.jim
-      });
+      expect(res.body.message).toBe('User created successfully');
       expect(res.body.data).toHaveProperty('id');
+      expect(res.body.data).toHaveProperty('name', 'Jim Carrey');
       expect(res.body.data.role).toBe(UserRole.USER)
     });
 
@@ -92,12 +91,10 @@ describe('Users routes', () => {
       const res = await factory.app.post(CREATE_ROUTE).send(mockUsers.alice);
 
       expect(res.status).toBe(201);
-      expect(res.body).toMatchObject({
-        message: 'User created successfully',
-        data: mockUsers.alice
-      });
+      expect(res.body.message).toBe('User created successfully');
       expect(res.body.data).toHaveProperty('id');
-      expect(res.body.data.role).toBe(UserRole.ADMIN)
+      expect(res.body.data).toHaveProperty('name', 'Alice Ruso');
+      expect(res.body.data.role).toBe(UserRole.ADMIN);
     });
 
     it('should return 400 if required field are missing', async () => {
@@ -122,6 +119,7 @@ describe('Users routes', () => {
     });
 
     it('should return 409 if email already exists', async () => {
+        await factory.app.post(CREATE_ROUTE).send(mockUsers.cane);
       const res = await factory.app.post(CREATE_ROUTE).send(mockUsers.cane);
 
       expect(res.status).toBe(409);
