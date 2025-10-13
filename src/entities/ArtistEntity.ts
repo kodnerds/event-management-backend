@@ -8,7 +8,7 @@ import {
 } from "typeorm";
 
 @Entity("artists")
-export class Artist {
+export class ArtistEntity {
   @PrimaryGeneratedColumn("uuid")
   id!: string;
 

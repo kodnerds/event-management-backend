@@ -33,7 +33,7 @@
     "typescript-eslint": "^8.46.0"
   },
   "dependencies": {
-    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.2",
     "envalid": "^8.1.0",
     "express": "^5.1.0",
     "express-validator": "^7.2.1",
