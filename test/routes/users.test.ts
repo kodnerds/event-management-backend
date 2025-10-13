@@ -16,10 +16,18 @@ const mockUsers = {
     password: 'AdminPass456@',
     location: 'New York',
     favouriteGenres: ['Rock', 'Jazz']
+  },
+  adminValidData: {
+    firstName: 'John',
+    lastName: 'Mitchel',
+    email: 'john.itchel@example.com',
+    password: 'SecureAdminPass123!',
+    role: 'ADMIN'
   }
 };
 
 const CREATE_ROUTE = '/users/signup';
+const LOGIN_ROUTE = '/auth/login';
 
 describe('Users routes', () => {
   const factory = new TestFactory();
@@ -91,6 +99,44 @@ describe('Users routes', () => {
 
       expect(res.status).toBe(HTTP_STATUS.BAD_REQUEST);
       expect(res.body).toHaveProperty('errors');
+    });
+
+    it('should login user with valid data', async () => {
+      await factory.app.post(CREATE_ROUTE).send(mockUsers.valid);
+
+      const res = await factory.app.post(LOGIN_ROUTE).send({
+        email: mockUsers.valid.email,
+        password: mockUsers.valid.password
+      });
+
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({
+        message: 'Login successfully'
+      });
+      expect(res.body).toHaveProperty('token');
+      expect(res.body.data).toHaveProperty('id');
+      expect(res.body.data).toHaveProperty('name');
+      expect(res.body.data).toHaveProperty('email');
+      expect(res.body.data).toHaveProperty('role');
+    });
+
+    it('should login admin with valid data', async () => {
+      await factory.app.post(CREATE_ROUTE).send(mockUsers.adminValidData);
+
+      const res = await factory.app.post(LOGIN_ROUTE).send({
+        email: mockUsers.adminValidData.email,
+        password: mockUsers.adminValidData.password
+      });
+
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({
+        message: 'Login successfully'
+      });
+      expect(res.body).toHaveProperty('token');
+      expect(res.body.data).toHaveProperty('id');
+      expect(res.body.data).toHaveProperty('name');
+      expect(res.body.data).toHaveProperty('email');
+      expect(res.body.data).toHaveProperty('role');
     });
   });
 });
