@@ -1,7 +1,8 @@
 import bcrypt from 'bcryptjs';
 
-import type { Request, Response } from 'express';
 import { ArtistRepository } from '../repositories';
+
+import type { Request, Response } from 'express';
 
 export const createArtist = async (req: Request, res: Response) => {
   try {
