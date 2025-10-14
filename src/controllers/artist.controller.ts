@@ -4,7 +4,6 @@ import { ArtistRepository } from '../repositories/ArtistRepository';
 
 import type { Request, Response } from 'express';
 
-
 export const createArtist = async (req: Request, res: Response) => {
   try {
     const { name, email, password, genre, bio } = req.body;
@@ -39,6 +38,6 @@ export const createArtist = async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    return res.status(500).json({ message: `Server error: ${error}`});
+    return res.status(500).json({ message: `Server error: ${error}` });
   }
 };

@@ -1,4 +1,3 @@
-
 import { handleGetRepository } from '../database';
 import { ArtistEntity } from '../entities';
 
