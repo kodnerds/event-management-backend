@@ -34,7 +34,7 @@ export default tseslint.config(
       'prefer-const': 'error',
       'no-var': 'error',
       eqeqeq: ['error', 'always', { null: 'ignore' }],
-      'no-duplicate-imports': 'error',
+      'no-duplicate-imports': 'off',
       'no-console': 'error',
       'max-params': ['error', 4],
       'max-lines-per-function': ['warn', { max: 50, skipBlankLines: true, skipComments: true }],
@@ -52,17 +52,20 @@ export default tseslint.config(
             'builtin',
             'external',
             'internal',
-            ['parent', 'sibling'],
+            'parent',
+            'sibling',
             'index',
-            'object',
-            'type'
+            'type',
+            'object'
           ],
           'newlines-between': 'always',
           alphabetize: { order: 'asc', caseInsensitive: true }
         }
       ],
-      'import/no-duplicates': 'error',
+      'import/no-cycle': 'error',
+      'import/no-self-import': 'error',
       'import/prefer-default-export': 'off',
+      'import/no-mutable-exports': 'error',
       'import/no-extraneous-dependencies': 'off',
       'import/extensions': 'off',
       'import/newline-after-import': 'error',
@@ -147,6 +150,15 @@ export default tseslint.config(
         {
           selector: 'enumMember',
           format: ['UPPER_CASE']
+        }
+      ],
+      'import/no-duplicates': 'error',
+      '@typescript-eslint/consistent-type-imports': [
+        'error',
+        {
+          prefer: 'type-imports',
+          disallowTypeAnnotations: false,
+          fixStyle: 'separate-type-imports'
         }
       ],
       'prefer-promise-reject-errors': 'error',
