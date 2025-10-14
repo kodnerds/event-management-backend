@@ -10,4 +10,3 @@ logs/
 *.log
 .env.example
 .coverage
-.husky
