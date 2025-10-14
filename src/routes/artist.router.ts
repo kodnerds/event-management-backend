@@ -1,10 +1,10 @@
 import { Router } from 'express';
 
 import { createArtist } from '../controllers/artist.controller';
+import { validateRegisterUsers } from '../validators/artistValidator';
 
 const router = Router();
 
-// router.get('/', getUsers);
-router.post('/signup', createArtist);
+router.post('/signup', validateRegisterUsers, createArtist);
 
 export default router;

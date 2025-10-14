@@ -1,8 +1,7 @@
 import bcrypt from 'bcryptjs';
 
-import { ArtistRepository } from '../repositories/ArtistRepository';
-
 import type { Request, Response } from 'express';
+import { ArtistRepository } from '../repositories';
 
 export const createArtist = async (req: Request, res: Response) => {
   try {
@@ -28,13 +27,11 @@ export const createArtist = async (req: Request, res: Response) => {
       bio
     });
 
-    const savedArtist = await artistRepository.save(newArtist);
-
     return res.status(201).json({
       message: 'Artist created successfully',
       data: {
-        id: savedArtist.id,
-        name: savedArtist.name
+        id: newArtist.id,
+        name: newArtist.name
       }
     });
   } catch (error) {

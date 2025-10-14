@@ -1,4 +1,3 @@
-// src/middlewares/validateRegisterUsers.ts
 import { body, validationResult } from 'express-validator';
 
 import type { NextFunction, Request, Response } from 'express';
@@ -33,14 +32,7 @@ export const validateRegisterUsers: (
       'Password must contain at least one uppercase letter, one lowercase letter, one sign, and one number'
     ),
 
-  body('genre')
-    .notEmpty()
-    .withMessage('Genre is required')
-    .isString()
-    .withMessage('Genre should be in String only')
-    .isArray()
-    .trim()
-    .escape(),
+  body('genre').isArray().withMessage('Genre should be an array'),
 
   body('bio').isString().withMessage('Bio should be in String only'),
 
@@ -59,7 +51,6 @@ export const validateRegisterUsers: (
       });
       return;
     }
-
     next();
   }
 ];

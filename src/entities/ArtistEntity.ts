@@ -10,26 +10,26 @@ import {
 @Entity('artists')
 export class ArtistEntity {
   @PrimaryGeneratedColumn('uuid')
-  id!: string;
+  id: string;
 
   @Column({ nullable: false })
-  name!: string;
+  name: string;
 
-  @Column({ unique: true, nullable: false })
-  email!: string;
+  @Column({ unique: true })
+  email: string;
 
   @Column({ nullable: false })
-  password!: string;
+  password: string;
 
-  @Column('text', { array: true, nullable: false })
-  genre!: string[];
+  @Column('text', { array: true })
+  genre: string[];
 
   @Column({ default: '' })
-  bio!: string;
+  bio: string;
 
   @CreateDateColumn()
-  createdAt!: Date;
+  createdAt: Date;
 
   @UpdateDateColumn()
-  updatedAt!: Date;
+  updatedAt: Date;
 }
