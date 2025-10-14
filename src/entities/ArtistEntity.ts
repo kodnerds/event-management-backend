@@ -4,12 +4,12 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  UpdateDateColumn,
-} from "typeorm";
+  UpdateDateColumn
+} from 'typeorm';
 
-@Entity("artists")
+@Entity('artists')
 export class ArtistEntity {
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id!: string;
 
   @Column({ nullable: false })
@@ -21,10 +21,10 @@ export class ArtistEntity {
   @Column({ nullable: false })
   password!: string;
 
-  @Column("text", { array: true, nullable: false })
+  @Column('text', { array: true, nullable: false })
   genre!: string[];
 
-  @Column({ default: "" })
+  @Column({ default: '' })
   bio!: string;
 
   @CreateDateColumn()

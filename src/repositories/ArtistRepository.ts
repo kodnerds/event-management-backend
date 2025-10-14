@@ -9,13 +9,12 @@ export class ArtistRepository {
   constructor() {
     this.repository = handleGetRepository(ArtistEntity);
   }
-  
+
   // ✅ Save (Create or Update)
   async save(artist: Partial<ArtistEntity>): Promise<ArtistEntity> {
     const newArtist = this.repository.create(artist);
     return await this.repository.save(newArtist);
   }
-
 
   async create(artist: Partial<ArtistEntity>): Promise<ArtistEntity> {
     const newArtist = this.repository.create(artist);
@@ -31,6 +30,6 @@ export class ArtistRepository {
   }
 
   async findOne(options: FindOneOptions<ArtistEntity>): Promise<ArtistEntity | null> {
-    return await this.repository.findOne(options)
+    return await this.repository.findOne(options);
   }
 }
