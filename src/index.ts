@@ -24,7 +24,6 @@ export const main = async () => {
   );
 
   app.use('/api/v1', appRoutes);
-  app.use('/api/v1/artists/', require('./routes/artist.router'))
 
   app.listen(PORT, () => {
     // eslint-disable-next-line no-console

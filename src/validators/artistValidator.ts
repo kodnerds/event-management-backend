@@ -34,7 +34,6 @@ export const validateRegisterUsers: (ValidationChain | ((req: Request, res: Resp
 
     if (!errors.isEmpty()) {
       const formattedErrors = errors.array().map((error) => ({
-        field: error.path,
         message: error.msg,
       }));
 
