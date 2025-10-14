@@ -1,7 +1,8 @@
-import { Repository, FindOneOptions } from 'typeorm';
 
 import { handleGetRepository } from '../database';
 import { ArtistEntity } from '../entities';
+
+import type { FindOneOptions, Repository } from 'typeorm';
 
 export class ArtistRepository {
   private repository: Repository<ArtistEntity>;

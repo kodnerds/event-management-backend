@@ -1,6 +1,8 @@
 // src/middlewares/validateRegisterUsers.ts
-import { body, validationResult, ValidationChain } from 'express-validator';
-import { Request, Response, NextFunction } from 'express';
+import { body, validationResult } from 'express-validator';
+
+import type { NextFunction, Request, Response } from 'express';
+import type { ValidationChain } from 'express-validator';
 
 export const validateRegisterUsers: (
   | ValidationChain

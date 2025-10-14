@@ -1,7 +1,9 @@
-import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 
 import { ArtistRepository } from '../repositories/ArtistRepository';
+
+import type { Request, Response } from 'express';
+
 
 export const createArtist = async (req: Request, res: Response) => {
   try {
@@ -24,7 +26,7 @@ export const createArtist = async (req: Request, res: Response) => {
       email,
       password: hashedPassword,
       genre,
-      bio: bio || ''
+      bio
     });
 
     const savedArtist = await artistRepository.save(newArtist);
@@ -37,7 +39,6 @@ export const createArtist = async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    console.error('Signup Error:', error);
-    return res.status(500).json({ message: 'Server error.' });
+    return res.status(500).json({ message: `Server error: ${error}`});
   }
 };

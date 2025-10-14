@@ -1,9 +1,9 @@
 // src/entities/artist.entity.ts
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
   UpdateDateColumn
 } from 'typeorm';
 
