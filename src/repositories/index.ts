@@ -1,0 +1,1 @@
+export { ArtistRepository } from './ArtistRepository';
