@@ -24,7 +24,7 @@ export const main = async () => {
     res.send({ message: 'Welcome to Event management API' })
   );
 
-  app.use('/api/v1/', appRoutes);
+  app.use('/api/v1', appRoutes);
 
   app.listen(PORT, () => {
     logger.info(`Server listening on port http://localhost:${PORT}`);

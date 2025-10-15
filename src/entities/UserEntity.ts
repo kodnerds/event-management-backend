@@ -1,10 +1,14 @@
-import { Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn
+} from 'typeorm';
 
-import { ArtistEntity } from './ArtistEntity';
-
-export enum UserRole{
-  USER = "USER",
-  ADMIN = "ADMIN"
+export enum UserRole {
+  USER = 'USER',
+  ADMIN = 'ADMIN'
 }
 
 @Entity({ name: 'user' })
@@ -18,28 +22,27 @@ export class UserEntity {
   @Column()
   lastName: string;
 
-  @Column({unique:true})
-  email:string
+  @Column({ unique: true })
+  email: string;
 
   @Column()
-  password:string
+  password: string;
 
-  @Column({type:"enum",enum:UserRole,default:UserRole.USER})
-  role!:UserRole
+  @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
+  role: UserRole;
 
-  @Column("text",{array:true,nullable:true})
-  favouriteGenres?:string[]
+  @Column('text', { array: true, nullable: true })
+  favouriteGenres?: string[];
 
-  @ManyToMany(() => ArtistEntity)
-  @JoinTable()
-  favouriteArtists?:ArtistEntity[]
+  @Column('text', { array: true, nullable: true })
+  favouriteArtists: string[];
 
-  @Column({nullable:true})
-  location?: string;
-  
-  @CreateDateColumn({ type: 'timestamp with time zone' })
+  @Column({ nullable: true })
+  location: string;
+
+  @CreateDateColumn()
   createdAt: Date;
 
-  @UpdateDateColumn({ type: 'timestamp with time zone' })
+  @UpdateDateColumn()
   updatedAt: Date;
 }

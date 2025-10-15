@@ -49,7 +49,7 @@
     "build": "rimraf dist && tsc",
     "start": "ts-node dist/index.js",
     "typeorm": "typeorm-ts-node-commonjs",
-    "prepare": "husky && husky install",
+    "prepare": "husky",
     "dev": "nodemon src/index.ts",
     "lint": "eslint . --max-warnings=0 && tsc --noEmit && tsc --noEmit -p test/tsconfig.json",
     "lint:fix": "eslint . --fix",

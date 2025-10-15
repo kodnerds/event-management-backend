@@ -15,8 +15,8 @@ export class UserRepository {
     return await this.repository.save(newUser);
   }
 
-  async findByEmail(email:string):Promise<UserEntity | null>{
-    return await this.repository.findOne({where:{email}})
+  async findOneBy({ email }: { email: string }): Promise<UserEntity | null> {
+    return await this.repository.findOneBy({ email });
   }
 
   async findById(id: string): Promise<UserEntity | null> {
