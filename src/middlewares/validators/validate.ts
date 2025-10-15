@@ -10,7 +10,7 @@ export const validate = (req: Request, res: Response, next: NextFunction) => {
       status: 'error',
       code: 400,
       message: 'Validation error',
-      details: errors.array().map((err) => err.msg)
+      errors: errors.array().map((err) => err.msg)
     });
   }
 

@@ -39,10 +39,10 @@ jobs:
       - name: 🧪 Run tests
         env:
           NODE_ENV: test
-          POSTGRES_DB: dummy
-          POSTGRES_USER: dummy
-          POSTGRES_PASSWORD: dummy
-          POSTGRES_HOST: dummy
-          POSTGRES_PORT: 1234
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
           PORT: 3000
         run: npm test

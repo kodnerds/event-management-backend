@@ -7,5 +7,6 @@ export default {
   transform: {
     '^.+\\.[tj]s$': 'ts-jest'
   },
-  testPathIgnorePatterns: ['/e2e/', '/node_modules/', '/dist/']
+  testPathIgnorePatterns: ['/e2e/', '/node_modules/', '/dist/'],
+  ...(process.env.CI && { maxWorkers: 1 })
 };

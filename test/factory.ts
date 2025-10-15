@@ -29,7 +29,9 @@ export class TestFactory {
   }
 
   public async reset(): Promise<void> {
-    await this._connection.synchronize(true);
+    if (this._connection.isInitialized) {
+      await this._connection.synchronize(true);
+    }
   }
 
   private async startup(): Promise<void> {
@@ -40,7 +42,8 @@ export class TestFactory {
       this._app.use(express.json());
       this._app.use(express.urlencoded({ extended: true }));
       this._app.use('/', routes);
-      this._server = createServer(this._app).listen(3010);
+      // Use port 0 for random available port
+      this._server = createServer(this._app).listen(0);
     } catch (error) {
       logger.error('testing error', error);
     }
