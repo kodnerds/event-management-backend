@@ -1,0 +1,17 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Get current branch name
+current_branch=$(git rev-parse --abbrev-ref HEAD)
+
+# Check if pushing to protected branches
+if [ "$current_branch" = "main" ] || [ "$current_branch" = "master" ]; then
+    echo "❌ Direct pushes to main/master branch are not allowed!"
+    echo "Please create a feature branch and submit a pull request."
+    echo ""
+    echo "To create a feature branch:"
+    echo "  git checkout -b feat/your-feature-name"
+    exit 1
+fi
+
+echo "✅ Push to $current_branch branch allowed"
