@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 
 import { ArtistRepository } from '../repositories';
+import logger from '../utils/logger';
 
 import type { Request, Response } from 'express';
 
@@ -36,6 +37,7 @@ export const createArtist = async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
+    logger.error('Error creating artist:', error);
     return res.status(500).json({ message: `Server error: ${error}` });
   }
 };
