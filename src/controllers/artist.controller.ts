@@ -41,7 +41,7 @@ export const createArtist = async (req: Request, res: Response) => {
   }
 };
 
-export const getArtists = async(req:Request,res:Response) => {
+export const getArtists = async (req: Request, res: Response) => {
   try {
     const artistRepository = new ArtistRepository();
 
@@ -49,19 +49,19 @@ export const getArtists = async(req:Request,res:Response) => {
     const limit = parseInt(req.query.limit as string) || 10;
     const offset = (page - 1) * limit;
 
-    const artists = await artistRepository.findAll({skip:offset,take:limit})
+    const artists = await artistRepository.findAll({ skip: offset, take: limit });
 
     return res.status(200).json({
-      message: "Artists retrieved successfully",
+      message: 'Artists retrieved successfully',
       data: artists,
-      pagination:{
-        currentPage:page,
+      pagination: {
+        currentPage: page,
         limit,
-        total:artists.length
+        total: artists.length
       }
     });
   } catch (error) {
     logger.error('Error retrieving artists:', error);
-    return res.status(500).json({message: 'Internal server error'})
+    return res.status(500).json({ message: 'Internal server error' });
   }
-}
+};
