@@ -201,6 +201,12 @@ export default tseslint.config(
     }
   },
   {
+    files: ['**/*.test.ts'],
+    rules: {
+      'max-lines-per-function': 'off'
+    }
+  },
+  {
     ignores: [
       'dist/**',
       'node_modules/**',

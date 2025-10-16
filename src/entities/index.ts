@@ -1,2 +1,2 @@
 export * from './UserEntity';
-export { ArtistEntity } from './ArtistEntity';
+export * from './ArtistEntity';

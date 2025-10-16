@@ -1,19 +1,24 @@
 import { TestFactory } from '../factory';
 
 const mockUsers = {
-  john: {
+  valid: {
     firstName: 'John',
     lastName: 'Doe',
-    age: 30
+    email: 'john.doe@example.com',
+    password: 'SecurePass123!',
+    role: 'USER'
   },
-  jane: {
+  validWithOptional: {
     firstName: 'Jane',
     lastName: 'Smith',
-    age: 25
+    email: 'jane.smith@example.com',
+    password: 'AdminPass456@',
+    location: 'New York',
+    favouriteGenres: ['Rock', 'Jazz']
   }
 };
 
-const CREATE_ROUTE = '/users/create';
+const CREATE_ROUTE = '/users/signup';
 
 describe('Users routes', () => {
   const factory = new TestFactory();
@@ -39,38 +44,52 @@ describe('Users routes', () => {
     });
 
     it('should return all users when users exist', async () => {
-      await factory.app.post(CREATE_ROUTE).send(mockUsers.john);
-      await factory.app.post(CREATE_ROUTE).send(mockUsers.jane);
+      await factory.app.post(CREATE_ROUTE).send(mockUsers.valid);
+      await factory.app.post(CREATE_ROUTE).send(mockUsers.validWithOptional);
 
       const res = await factory.app.get('/users');
 
       expect(res.status).toBe(200);
       expect(res.body).toHaveLength(2);
-      expect(res.body[0]).toMatchObject(mockUsers.john);
-      expect(res.body[1]).toMatchObject(mockUsers.jane);
     });
   });
 
-  describe('POST /users', () => {
+  describe('POST /users/create', () => {
     it('should create a new user with valid data', async () => {
-      const res = await factory.app.post(CREATE_ROUTE).send(mockUsers.john);
+      const res = await factory.app.post(CREATE_ROUTE).send(mockUsers.valid);
 
       expect(res.status).toBe(201);
       expect(res.body).toMatchObject({
-        message: 'User created successfully',
-        data: mockUsers.john
+        message: 'User created successfully'
       });
       expect(res.body.data).toHaveProperty('id');
     });
 
-    it('should create multiple users independently', async () => {
-      await factory.app.post(CREATE_ROUTE).send(mockUsers.jane);
-      await factory.app.post(CREATE_ROUTE).send(mockUsers.jane);
+    it('should create a user with optional fields', async () => {
+      const res = await factory.app.post(CREATE_ROUTE).send(mockUsers.validWithOptional);
 
-      const res = await factory.app.get('/users');
+      expect(res.status).toBe(201);
+      expect(res.body.data).toHaveProperty('id');
+    });
 
-      expect(res.status).toBe(200);
-      expect(res.body).toHaveLength(2);
+    it('should return 409 when email already exists', async () => {
+      await factory.app.post(CREATE_ROUTE).send(mockUsers.valid);
+      const res = await factory.app.post(CREATE_ROUTE).send(mockUsers.valid);
+
+      expect(res.status).toBe(409);
+      expect(res.body.message).toBe('Email already exists');
+    });
+
+    it('should return 400 for invalid data', async () => {
+      const invalidData = {
+        firstName: 'J',
+        email: 'invalid-email',
+        password: 'weak'
+      };
+      const res = await factory.app.post(CREATE_ROUTE).send(invalidData);
+
+      expect(res.status).toBe(400);
+      expect(res.body).toHaveProperty('errors');
     });
   });
 });

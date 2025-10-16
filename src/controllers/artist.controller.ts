@@ -1,6 +1,5 @@
-import bcrypt from 'bcryptjs';
-
 import { ArtistRepository } from '../repositories';
+import { hashPassword } from '../utils/hash';
 import logger from '../utils/logger';
 
 import type { Request, Response } from 'express';
@@ -19,7 +18,7 @@ export const createArtist = async (req: Request, res: Response) => {
       return res.status(409).json({ message: 'Email already exists.' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await hashPassword(password);
 
     const newArtist = await artistRepository.create({
       name,

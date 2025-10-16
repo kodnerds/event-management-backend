@@ -2,9 +2,12 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  ManyToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn
 } from 'typeorm';
+
+import { UserEntity } from './UserEntity';
 
 @Entity('artists')
 export class ArtistEntity {
@@ -31,4 +34,7 @@ export class ArtistEntity {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @ManyToMany(() => UserEntity, (user) => user.favouriteArtists)
+  followers: UserEntity[];
 }
