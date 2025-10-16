@@ -8,5 +8,5 @@ export default {
     '^.+\\.[tj]s$': 'ts-jest'
   },
   testPathIgnorePatterns: ['/e2e/', '/node_modules/', '/dist/'],
-  ...(process.env.CI && { maxWorkers: 1 })
+  maxWorkers: 1 
 };

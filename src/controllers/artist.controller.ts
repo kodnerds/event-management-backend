@@ -40,3 +40,28 @@ export const createArtist = async (req: Request, res: Response) => {
     return res.status(500).json({ message: `Server error: ${error}` });
   }
 };
+
+export const getArtists = async(req:Request,res:Response) => {
+  try {
+    const artistRepository = new ArtistRepository();
+
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const offset = (page - 1) * limit;
+
+    const artists = await artistRepository.findAll({skip:offset,take:limit})
+
+    return res.status(200).json({
+      message: "Artists retrieved successfully",
+      data: artists,
+      pagination:{
+        currentPage:page,
+        limit,
+        total:artists.length
+      }
+    });
+  } catch (error) {
+    logger.error('Error retrieving artists:', error);
+    return res.status(500).json({message: 'Internal server error'})
+  }
+}
