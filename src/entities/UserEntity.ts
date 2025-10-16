@@ -2,9 +2,13 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinTable,
+  ManyToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn
 } from 'typeorm';
+
+import { ArtistEntity } from './ArtistEntity';
 
 export enum UserRole {
   USER = 'USER',
@@ -34,8 +38,13 @@ export class UserEntity {
   @Column('text', { array: true, nullable: true })
   favouriteGenres?: string[];
 
-  @Column('text', { array: true, nullable: true })
-  favouriteArtists: string[];
+  @ManyToMany(() => ArtistEntity, (artist) => artist.followers)
+  @JoinTable({
+    name: 'user_favourite_artists',
+    joinColumn: { name: 'user_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'artist_id', referencedColumnName: 'id' }
+  })
+  favouriteArtists: ArtistEntity[];
 
   @Column({ nullable: true })
   location: string;

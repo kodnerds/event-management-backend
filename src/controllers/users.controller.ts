@@ -1,10 +1,9 @@
 import { UserRole } from '../entities';
 import { UserRepository } from '../repositories';
-import { hashPassword } from "../utils/hash";
+import { hashPassword } from '../utils/hash';
 import logger from '../utils/logger';
 
 import type { Request, Response } from 'express';
-
 
 export const getUsers = async (_: Request, res: Response) => {
   try {
@@ -45,6 +44,6 @@ export const createUser = async (req: Request, res: Response) => {
     });
   } catch (error) {
     logger.error('Error creating users:', error);
-    return errorResponse(res,500,"Internal server error")
+    return res.status(500).send({ message: 'Internal server error' });
   }
 };

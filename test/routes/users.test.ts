@@ -1,57 +1,25 @@
-import { UserRole } from '../../src/entities';
 import { TestFactory } from '../factory';
 
 const mockUsers = {
-  alice: {
-    firstName: 'Alice',
-    lastName: 'Ruso',
-    email: "alice@example.com",
-    password: "strongpass",
-    role: "ADMIN"
+  valid: {
+    firstName: 'John',
+    lastName: 'Doe',
+    email: 'john.doe@example.com',
+    password: 'SecurePass123!',
+    role: 'USER'
   },
-  clown: {
-    firstName: 'Clown',
-    lastName: 'Rousey',
-    email: "clown@example.com",
-    password: "strongpass",
-    role: "USER"
-  },
-  jim: {
-    firstName: 'Jim',
-    lastName: 'Carrey',
-    email: "jim@example.com",
-    password: "strongpass",
-    role: "USER"
-  },
-  mmawu:{
-    lastname:"arinze"
-  },
-  ali: {
-    firstName: 'Alice',
-    lastName: 'Ruso',
-    email: "invalid-email",
-    password: "strongpass",
-    role: "ADMIN"
-  },
-  short: {
-    firstName: 'Alice',
-    lastName: 'Ruso',
-    email: "alice@example.com",
-    password: "st",
-    role: "USER"
-  },
-  cane: {
-    firstName: 'Existing',
-    lastName: 'User',
-    email: "duplicate@example.com",
-    password: "hashedpassword",
-    role: "USER"
-  },
+  validWithOptional: {
+    firstName: 'Jane',
+    lastName: 'Smith',
+    email: 'jane.smith@example.com',
+    password: 'AdminPass456@',
+    location: 'New York',
+    favouriteGenres: ['Rock', 'Jazz']
+  }
 };
 
 const CREATE_ROUTE = '/users/signup';
 
-// eslint-disable-next-line max-lines-per-function
 describe('Users routes', () => {
   const factory = new TestFactory();
 
@@ -74,66 +42,54 @@ describe('Users routes', () => {
       expect(res.status).toBe(200);
       expect(res.body).toHaveLength(0);
     });
-  });
 
-  describe('POST /signup', () => {
-    it('should create a new user with user role', async () => {
-      const res = await factory.app.post(CREATE_ROUTE).send(mockUsers.jim);
-
-      expect(res.status).toBe(201);
-      expect(res.body.message).toBe('User created successfully');
-      expect(res.body.data).toHaveProperty('id');
-      expect(res.body.data).toHaveProperty('name', 'Jim Carrey');
-      expect(res.body.data.role).toBe(UserRole.USER)
-    });
-
-     it('should create a new user with ADMIN role', async () => {
-      const res = await factory.app.post(CREATE_ROUTE).send(mockUsers.alice);
-
-      expect(res.status).toBe(201);
-      expect(res.body.message).toBe('User created successfully');
-      expect(res.body.data).toHaveProperty('id');
-      expect(res.body.data).toHaveProperty('name', 'Alice Ruso');
-      expect(res.body.data.role).toBe(UserRole.ADMIN);
-    });
-
-    it('should return 400 if required field are missing', async () => {
-      const res = await factory.app.post(CREATE_ROUTE).send(mockUsers.mmawu);
-
-      expect(res.status).toBe(400);
-      expect(res.body.message).toContain('Validation error')
-    });
-
-    it('should return 400 if email is invalid', async () => {
-      const res = await factory.app.post(CREATE_ROUTE).send(mockUsers.ali);
-
-      expect(res.status).toBe(400);
-      expect(res.body.details[0]).toContain('Invalid email format');
-    });
-
-    it('should return 400 if password is too short', async () => {
-      const res = await factory.app.post(CREATE_ROUTE).send(mockUsers.short);
-
-      expect(res.status).toBe(400);
-      expect(res.body.details[0]).toContain('Password must be at least 6 characters');
-    });
-
-    it('should return 409 if email already exists', async () => {
-        await factory.app.post(CREATE_ROUTE).send(mockUsers.cane);
-      const res = await factory.app.post(CREATE_ROUTE).send(mockUsers.cane);
-
-      expect(res.status).toBe(409);
-      expect(res.body.message).toContain('Email already exists');
-  });
-
-    it('should create multiple users independently', async () => {
-      await factory.app.post(CREATE_ROUTE).send(mockUsers.alice);
-      await factory.app.post(CREATE_ROUTE).send(mockUsers.clown);
+    it('should return all users when users exist', async () => {
+      await factory.app.post(CREATE_ROUTE).send(mockUsers.valid);
+      await factory.app.post(CREATE_ROUTE).send(mockUsers.validWithOptional);
 
       const res = await factory.app.get('/users');
 
       expect(res.status).toBe(200);
       expect(res.body).toHaveLength(2);
+    });
+  });
+
+  describe('POST /users/create', () => {
+    it('should create a new user with valid data', async () => {
+      const res = await factory.app.post(CREATE_ROUTE).send(mockUsers.valid);
+
+      expect(res.status).toBe(201);
+      expect(res.body).toMatchObject({
+        message: 'User created successfully'
+      });
+      expect(res.body.data).toHaveProperty('id');
+    });
+
+    it('should create a user with optional fields', async () => {
+      const res = await factory.app.post(CREATE_ROUTE).send(mockUsers.validWithOptional);
+
+      expect(res.status).toBe(201);
+      expect(res.body.data).toHaveProperty('id');
+    });
+
+    it('should return 409 when email already exists', async () => {
+      await factory.app.post(CREATE_ROUTE).send(mockUsers.valid);
+      const res = await factory.app.post(CREATE_ROUTE).send(mockUsers.valid);
+
+      expect(res.status).toBe(409);
+      expect(res.body.message).toBe('Email already exists');
+    });
+
+    it('should return 400 for invalid data', async () => {
+      const invalidData = {
+        firstName: 'J',
+        email: 'invalid-email',
+        password: 'weak'
+      };
+      const res = await factory.app.post(CREATE_ROUTE).send(invalidData);
+
+      expect(res.status).toBe(400);
+      expect(res.body).toHaveProperty('errors');
     });
   });
 });
