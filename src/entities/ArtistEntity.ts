@@ -1,30 +1,32 @@
-// src/entities/artist.entity.ts
 import {
   Column,
   CreateDateColumn,
   Entity,
+  ManyToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn
 } from 'typeorm';
+
+import { UserEntity } from './UserEntity';
 
 @Entity('artists')
 export class ArtistEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ nullable: false })
+  @Column()
   name: string;
 
   @Column({ unique: true })
   email: string;
 
-  @Column({ nullable: false })
+  @Column()
   password: string;
 
   @Column('text', { array: true })
   genre: string[];
 
-  @Column({ default: '' })
+  @Column({ default: '', nullable: true })
   bio: string;
 
   @CreateDateColumn()
@@ -32,4 +34,7 @@ export class ArtistEntity {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @ManyToMany(() => UserEntity, (user) => user.favouriteArtists)
+  followers: UserEntity[];
 }
