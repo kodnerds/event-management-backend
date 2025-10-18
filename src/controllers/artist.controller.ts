@@ -47,7 +47,10 @@ export const getArtists = async (req: Request, res: Response) => {
     const artistRepository = new ArtistRepository();
     const { page, limit, offset } = getPaginationParams(req.query);
 
-    const [artists, total] = await artistRepository.findAll({ skip: offset, take: limit });
+    const [artists, total] = await Promise.all([
+      artistRepository.findAll({ skip: offset, take: limit }),
+      artistRepository.count()
+    ]);
 
     return res.status(200).json({
       message: 'Artists retrieved successfully',
