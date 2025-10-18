@@ -1,4 +1,5 @@
 import { ArtistRepository } from '../repositories';
+import { getPaginationParams } from '../utils/getPaginationParams';
 import { hashPassword } from '../utils/hash';
 import logger from '../utils/logger';
 
@@ -44,12 +45,9 @@ export const createArtist = async (req: Request, res: Response) => {
 export const getArtists = async (req: Request, res: Response) => {
   try {
     const artistRepository = new ArtistRepository();
+    const { page, limit, offset } = getPaginationParams(req.query);
 
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
-    const offset = (page - 1) * limit;
-
-    const artists = await artistRepository.findAll({ skip: offset, take: limit });
+    const [artists, total] = await artistRepository.findAll({ skip: offset, take: limit });
 
     return res.status(200).json({
       message: 'Artists retrieved successfully',
@@ -57,7 +55,8 @@ export const getArtists = async (req: Request, res: Response) => {
       pagination: {
         currentPage: page,
         limit,
-        total: artists.length
+        total,
+        totalPages: Math.ceil(total / limit)
       }
     });
   } catch (error) {

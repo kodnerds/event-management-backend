@@ -19,13 +19,13 @@ export class ArtistRepository {
     return await this.repository.findOneBy({ id });
   }
 
-  async findAll(options?: { skip?: number; take?: number }): Promise<ArtistEntity[]> {
+  async findAll(options?: { skip?: number; take?: number }): Promise<[ArtistEntity[], number]> {
     const { skip = 0, take = 10 } = options ?? {};
 
-    return await this.repository.find({
+    return await this.repository.findAndCount({
       skip,
       take,
-      select: ['id', 'name', 'genre', 'bio'],
+      select: ['id', 'name', 'genre', 'bio', 'email', 'createdAt', 'updatedAt'],
       order: { createdAt: 'DESC' }
     });
   }
