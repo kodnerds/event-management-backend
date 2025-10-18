@@ -1,5 +1,6 @@
 import { UserRole } from '../entities';
 import { UserRepository } from '../repositories';
+import { HTTP_STATUS } from '../utils/const';
 import { hashPassword } from '../utils/hash';
 import logger from '../utils/logger';
 
@@ -12,7 +13,7 @@ export const getUsers = async (_: Request, res: Response) => {
     return res.send(users);
   } catch (error) {
     logger.error('Error fetching users:', error);
-    return res.status(500).send({ message: 'Error fetching users' });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send({ message: 'Error fetching users' });
   }
 };
 
@@ -23,7 +24,7 @@ export const createUser = async (req: Request, res: Response) => {
 
     const existingUser = await userRepository.findOneBy({ email });
     if (existingUser) {
-      return res.status(409).json({ message: 'Email already exists' });
+      return res.status(HTTP_STATUS.CONFLICT).json({ message: 'Email already exists' });
     }
 
     const hashed = await hashPassword(password);
@@ -44,6 +45,6 @@ export const createUser = async (req: Request, res: Response) => {
     });
   } catch (error) {
     logger.error('Error creating users:', error);
-    return res.status(500).send({ message: 'Internal server error' });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send({ message: 'Internal server error' });
   }
 };

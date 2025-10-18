@@ -1,4 +1,5 @@
 import { ArtistRepository } from '../../src/repositories';
+import { HTTP_STATUS } from '../../src/utils/const';
 import { TestFactory } from '../factory';
 
 const mockArtists = {
@@ -39,7 +40,7 @@ describe('Artist routes', () => {
     it('should create a new artist with valid data', async () => {
       const res = await factory.app.post(SIGNUP_ROUTE).send(mockArtists.valid);
 
-      expect(res.status).toBe(201);
+      expect(res.status).toBe(HTTP_STATUS.CREATED);
       expect(res.body).toMatchObject({
         message: 'Artist created successfully',
         data: { name: mockArtists.valid.name }
@@ -50,7 +51,7 @@ describe('Artist routes', () => {
     it('should create an artist without optional bio', async () => {
       const res = await factory.app.post(SIGNUP_ROUTE).send(mockArtists.validWithoutBio);
 
-      expect(res.status).toBe(201);
+      expect(res.status).toBe(HTTP_STATUS.CREATED);
       expect(res.body.data).toHaveProperty('id');
     });
 
@@ -58,7 +59,7 @@ describe('Artist routes', () => {
       await factory.app.post(SIGNUP_ROUTE).send(mockArtists.valid);
       const res = await factory.app.post(SIGNUP_ROUTE).send(mockArtists.valid);
 
-      expect(res.status).toBe(409);
+      expect(res.status).toBe(HTTP_STATUS.CONFLICT);
       expect(res.body.message).toBe('Email already exists.');
     });
 
@@ -71,7 +72,7 @@ describe('Artist routes', () => {
       };
       const res = await factory.app.post(SIGNUP_ROUTE).send(invalidData);
 
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(HTTP_STATUS.BAD_REQUEST);
       expect(res.body).toHaveProperty('errors');
     });
   });
@@ -83,7 +84,7 @@ describe('Artist routes', () => {
 
       const response = await factory.app.get(GET_ARTISTS_ROUTE);
 
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(HTTP_STATUS.OK);
       expect(response.body).toHaveProperty('data');
       expect(Array.isArray(response.body.data)).toBe(true);
 
@@ -93,13 +94,14 @@ describe('Artist routes', () => {
       expect(firstResponse).toHaveProperty('name');
       expect(firstResponse).toHaveProperty('genre');
       expect(firstResponse).toHaveProperty('bio');
+      expect(firstResponse).toHaveProperty('email');
 
-      expect(firstResponse).not.toHaveProperty('email');
+      expect(firstResponse).not.toHaveProperty('password');
     });
 
     it('should return empty array when no artists exist', async () => {
       const response = await factory.app.get(GET_ARTISTS_ROUTE);
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(HTTP_STATUS.OK);
       expect(response.body.data).toEqual([]);
       expect(response.body.pagination.total).toBe(0);
       expect(response.body.message).toBe('Artists retrieved successfully');
@@ -112,7 +114,7 @@ describe('Artist routes', () => {
 
       const response = await factory.app.get(GET_ARTISTS_ROUTE);
 
-      expect(response.status).toBe(500);
+      expect(response.status).toBe(HTTP_STATUS.INTERNAL_SERVER_ERROR);
       expect(response.body).toHaveProperty('message', 'Internal server error');
     });
   });

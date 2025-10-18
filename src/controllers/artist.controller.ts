@@ -1,4 +1,5 @@
 import { ArtistRepository } from '../repositories';
+import { HTTP_STATUS } from '../utils/const';
 import { getPaginationParams } from '../utils/getPaginationParams';
 import { hashPassword } from '../utils/hash';
 import logger from '../utils/logger';
@@ -16,7 +17,7 @@ export const createArtist = async (req: Request, res: Response) => {
       select: ['id']
     });
     if (existingArtist) {
-      return res.status(409).json({ message: 'Email already exists.' });
+      return res.status(HTTP_STATUS.CONFLICT).json({ message: 'Email already exists.' });
     }
 
     const hashedPassword = await hashPassword(password);
@@ -29,7 +30,7 @@ export const createArtist = async (req: Request, res: Response) => {
       bio
     });
 
-    return res.status(201).json({
+    return res.status(HTTP_STATUS.CREATED).json({
       message: 'Artist created successfully',
       data: {
         id: newArtist.id,
@@ -38,7 +39,7 @@ export const createArtist = async (req: Request, res: Response) => {
     });
   } catch (error) {
     logger.error('Error creating artist:', error);
-    return res.status(500).json({ message: `Server error: ${error}` });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ message: `Server error: ${error}` });
   }
 };
 
@@ -52,7 +53,7 @@ export const getArtists = async (req: Request, res: Response) => {
       artistRepository.count()
     ]);
 
-    return res.status(200).json({
+    return res.status(HTTP_STATUS.OK).json({
       message: 'Artists retrieved successfully',
       data: artists,
       pagination: {
@@ -64,6 +65,6 @@ export const getArtists = async (req: Request, res: Response) => {
     });
   } catch (error) {
     logger.error('Error retrieving artists:', error);
-    return res.status(500).json({ message: 'Internal server error' });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ message: 'Internal server error' });
   }
 };
