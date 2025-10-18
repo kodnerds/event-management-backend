@@ -1,3 +1,4 @@
+import { ArtistRepository } from '../../src/repositories';
 import { TestFactory } from '../factory';
 
 const mockArtists = {
@@ -17,7 +18,7 @@ const mockArtists = {
 };
 
 const SIGNUP_ROUTE = '/artists/signup';
-const GET_ARTISTS_ROUTE = '/artists/all';
+const GET_ARTISTS_ROUTE = '/artists';
 
 describe('Artist routes', () => {
   const factory = new TestFactory();
@@ -75,41 +76,44 @@ describe('Artist routes', () => {
     });
   });
 
-  it('should retrieve all artists with limited fields', async () => {
-    await factory.app.post('/artists/signup').send(mockArtists.valid) 
-    await factory.app.post('/artists/signup').send(mockArtists.validWithoutBio)
+  describe('GET /artists', () => {
+    it('should retrieve all artists with limited fields', async () => {
+      await factory.app.post(SIGNUP_ROUTE).send(mockArtists.valid);
+      await factory.app.post(SIGNUP_ROUTE).send(mockArtists.validWithoutBio);
 
-    const response = await factory.app.get(GET_ARTISTS_ROUTE);
+      const response = await factory.app.get(GET_ARTISTS_ROUTE);
 
-    expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty('data');
-    expect(Array.isArray(response.body.data)).toBe(true)
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('data');
+      expect(Array.isArray(response.body.data)).toBe(true);
 
-    const firstResponse = response.body.data[0];
+      const firstResponse = response.body.data[0];
 
-    expect(firstResponse).toHaveProperty('id');
-    expect(firstResponse).toHaveProperty('name');
-    expect(firstResponse).toHaveProperty('genre');
-    expect(firstResponse).toHaveProperty('bio');
+      expect(firstResponse).toHaveProperty('id');
+      expect(firstResponse).toHaveProperty('name');
+      expect(firstResponse).toHaveProperty('genre');
+      expect(firstResponse).toHaveProperty('bio');
 
-    expect(firstResponse).not.toHaveProperty('password');
-    expect(firstResponse).not.toHaveProperty('email');
-  })
+      expect(firstResponse).not.toHaveProperty('email');
+    });
 
-  it('should return empty array when no artists exist',async() => {
-    await factory.reset();
-    const response = await factory.app.get(GET_ARTISTS_ROUTE);
+    it('should return empty array when no artists exist', async () => {
+      const response = await factory.app.get(GET_ARTISTS_ROUTE);
+      expect(response.status).toBe(200);
+      expect(response.body.data).toEqual([]);
+      expect(response.body.pagination.total).toBe(0);
+      expect(response.body.message).toBe('Artists retrieved successfully');
+    });
 
-    expect(response.status).toBe(200);
-    expect(response.body.data).toEqual([])
+    it('should handle database errors gracefully', async () => {
+      jest
+        .spyOn(ArtistRepository.prototype, 'findAll')
+        .mockRejectedValueOnce(new Error('Database error'));
 
-  });
+      const response = await factory.app.get(GET_ARTISTS_ROUTE);
 
-  it('should handle database errors gracefully', async () => {
-    await factory._connection.destroy();
-    const response = await factory.app.get(GET_ARTISTS_ROUTE);
-
-    expect(response.status).toBe(500);
-    expect(response.body).toHaveProperty('message','Internal server error')
+      expect(response.status).toBe(500);
+      expect(response.body).toHaveProperty('message', 'Internal server error');
+    });
   });
 });
