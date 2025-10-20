@@ -83,7 +83,7 @@ describe('Artist routes', () => {
       await factory.app.post(SIGNUP_ROUTE).send(mockArtists.validWithoutBio);
 
       const response = await factory.app.get(GET_ARTISTS_ROUTE);
-
+      
       expect(response.status).toBe(HTTP_STATUS.OK);
       expect(response.body).toHaveProperty('data');
       expect(Array.isArray(response.body.data)).toBe(true);
@@ -111,7 +111,6 @@ describe('Artist routes', () => {
         .mockRejectedValueOnce(new Error('Database error'));
 
       const response = await factory.app.get(GET_ARTISTS_ROUTE);
-
       expect(response.status).toBe(HTTP_STATUS.INTERNAL_SERVER_ERROR);
       expect(response.body).toHaveProperty('message', 'Internal server error');
     });

@@ -19,15 +19,19 @@ export class ArtistRepository {
     return await this.repository.findOneBy({ id });
   }
 
-  async findAll(options?: { skip?: number; take?: number }): Promise<ArtistEntity[]> {
+  async findAll(options?: {
+    skip?: number;
+    take?: number;
+  }): Promise<Omit<ArtistEntity, 'password'>[]> {
     const { skip = 0, take = 10 } = options ?? {};
 
-    return await this.repository.find({
+    const artists = await this.repository.find({
       skip,
       take,
-      select: ['id', 'name', 'genre', 'bio', 'email'],
       order: { createdAt: 'DESC' }
     });
+
+    return artists.map(({ password, ...artist }) => artist);
   }
 
   async findOne(options: FindOneOptions<ArtistEntity>): Promise<ArtistEntity | null> {
