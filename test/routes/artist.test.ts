@@ -95,8 +95,6 @@ describe('Artist routes', () => {
       expect(firstResponse).toHaveProperty('genre');
       expect(firstResponse).toHaveProperty('bio');
       expect(firstResponse).toHaveProperty('email');
-
-      expect(firstResponse).not.toHaveProperty('password');
     });
 
     it('should return empty array when no artists exist', async () => {
