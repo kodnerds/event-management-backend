@@ -39,7 +39,9 @@ export const createArtist = async (req: Request, res: Response) => {
     });
   } catch (error) {
     logger.error('Error creating artist:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ message: `Server error: ${error}` });
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ message: `Server error: ${error}` });
   }
 };
 
