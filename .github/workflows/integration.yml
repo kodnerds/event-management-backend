@@ -45,4 +45,5 @@ jobs:
           POSTGRES_PASSWORD: test
           POSTGRES_DB: test
           PORT: 3000
+          ACCESS_TOKEN_SECRET: 'test-secret'
         run: npm test

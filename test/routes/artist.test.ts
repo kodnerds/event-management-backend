@@ -1,22 +1,7 @@
 import { ArtistRepository } from '../../src/repositories';
 import { HTTP_STATUS } from '../../src/utils/const';
 import { TestFactory } from '../factory';
-
-const mockArtists = {
-  valid: {
-    name: 'John Doe',
-    email: 'johndoe@example.com',
-    password: 'SecurePass123!',
-    genre: ['Rock', 'Blues'],
-    bio: 'Professional musician with 10 years of experience.'
-  },
-  validWithoutBio: {
-    name: 'Jane Smith',
-    email: 'janesmith@example.com',
-    password: 'MyPass456@',
-    genre: ['Pop', 'Electronic']
-  }
-};
+import { mockArtists } from '../mocks/data';
 
 const SIGNUP_ROUTE = '/artists/signup';
 const GET_ARTISTS_ROUTE = '/artists';

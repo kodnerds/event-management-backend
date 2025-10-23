@@ -9,7 +9,8 @@ const envConfig = cleanEnv(process.env, {
   POSTGRES_DB: str({ default: undefined }),
   POSTGRES_PORT: port({ default: undefined }),
   POSTGRES_HOST: str({ default: undefined }),
-  LOG_LEVEL: str({ default: 'debug' })
+  LOG_LEVEL: str({ default: 'debug' }),
+  ACCESS_TOKEN_SECRET: str({ default: undefined })
 });
 
 const extendedEnvConfig = {
