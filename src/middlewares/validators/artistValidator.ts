@@ -44,3 +44,20 @@ export const signupValidation = [
     .isLength({ max: 500 })
     .withMessage('Bio must not exceed 500 characters')
 ];
+
+export const updateValidation = [
+  body('email').not().exists().withMessage('Email cannot be updated'),
+  body('password').not().exists().withMessage('Password cannot be updated'),
+
+  body('name').optional().isString().notEmpty().withMessage('Name must be a non-empty string'),
+
+  body('genre')
+    .optional()
+    .isArray({ min: 1 })
+    .withMessage('Genre must be a non-empty array of strings')
+    .bail()
+    .custom((arr) => arr.every((g: unknown) => typeof g === 'string'))
+    .withMessage('Each genre must be a string'),
+
+  body('bio').optional().isString().withMessage('Bio must be a string')
+];
