@@ -91,7 +91,7 @@ export const updateArtist = async (req: Request, res: Response) => {
     } catch {
       return res.status(404).json({ message: 'Artist does not exist' });
     }
-    
+
     if (!existingArtist) {
       return res.status(409).json({ message: 'Artist does not exist.' });
     }

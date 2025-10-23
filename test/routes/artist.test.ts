@@ -188,7 +188,7 @@ describe('Artist routes', () => {
         .send(updatePayload);
 
       expect(updateArtist.status).toBe(200);
-      
+
       expect(updateArtist.body).toMatchObject({
         message: 'Artist updated successfully',
         data: {
