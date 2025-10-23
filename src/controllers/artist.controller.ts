@@ -94,6 +94,7 @@ export const updateArtist = async (req: Request, res: Response) => {
 
     if (!existingArtist) {
       return res.status(404).json({ message: 'Artist does not exist' });
+      return res.status(404).json({ message: 'Artist does not exist' });
     }
 
     const updateData: Partial<ArtistEntity> = {};
@@ -106,7 +107,7 @@ export const updateArtist = async (req: Request, res: Response) => {
     const updatedArtist = await artistRepository.findAndUpdate(id, updateData);
 
     if (!updatedArtist) {
-      return res.status(400).json({ message: 'Failed to update artist' });
+      return res.status(404).json({ message: 'Artist could not be updated' });
     }
 
     const { password, ...artistData } = updatedArtist;

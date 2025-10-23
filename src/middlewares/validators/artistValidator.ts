@@ -59,16 +59,10 @@ export const updateValidation = [
     }
     return true;
   }),
-  
+
   body('name').optional().isString().notEmpty().withMessage('Name must be a non-empty string'),
 
-  body('genre')
-    .optional()
-    .isArray({ min: 1 })
-    .withMessage('Genre must be a non-empty array of strings')
-    .bail()
-    .custom((arr) => arr.every((g: unknown) => typeof g === 'string'))
-    .withMessage('Each genre must be a string'),
+  body('genre').optional().isArray({ min: 1 }).withMessage('Genre must be a non-empty array'),
 
   body('bio').optional().isString().withMessage('Bio must be a string')
 ];
