@@ -84,8 +84,14 @@ export const updateArtist = async (req: Request, res: Response) => {
 
     const artistRepository = new ArtistRepository();
 
-    const existingArtist = await artistRepository.findById(id);
+    let existingArtist: ArtistEntity | null = null;
 
+    try {
+      existingArtist = await artistRepository.findById(id);
+    } catch {
+      return res.status(404).json({ message: 'Artist does not exist' });
+    }
+    
     if (!existingArtist) {
       return res.status(409).json({ message: 'Artist does not exist.' });
     }
