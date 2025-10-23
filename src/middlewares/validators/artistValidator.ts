@@ -46,9 +46,20 @@ export const signupValidation = [
 ];
 
 export const updateValidation = [
-  body('email').not().exists().withMessage('Email cannot be updated'),
-  body('password').not().exists().withMessage('Password cannot be updated'),
+  body('email').custom((_, { req }) => {
+    if (Object.prototype.hasOwnProperty.call(req.body, 'email')) {
+      throw new Error('Email cannot be updated');
+    }
+    return true;
+  }),
 
+  body('password').custom((_, { req }) => {
+    if (Object.prototype.hasOwnProperty.call(req.body, 'password')) {
+      throw new Error('Password cannot be updated');
+    }
+    return true;
+  }),
+  
   body('name').optional().isString().notEmpty().withMessage('Name must be a non-empty string'),
 
   body('genre')
