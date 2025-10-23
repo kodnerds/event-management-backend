@@ -1,3 +1,4 @@
+import { HTTP_STATUS } from '../../src/utils/const';
 import { TestFactory } from '../factory';
 
 const mockUsers = {
@@ -39,7 +40,7 @@ describe('Users routes', () => {
     it('should fetch empty record when no record exist', async () => {
       const res = await factory.app.get('/users');
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(HTTP_STATUS.OK);
       expect(res.body).toHaveLength(0);
     });
 
@@ -49,7 +50,7 @@ describe('Users routes', () => {
 
       const res = await factory.app.get('/users');
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(HTTP_STATUS.OK);
       expect(res.body).toHaveLength(2);
     });
   });
@@ -58,7 +59,7 @@ describe('Users routes', () => {
     it('should create a new user with valid data', async () => {
       const res = await factory.app.post(CREATE_ROUTE).send(mockUsers.valid);
 
-      expect(res.status).toBe(201);
+      expect(res.status).toBe(HTTP_STATUS.CREATED);
       expect(res.body).toMatchObject({
         message: 'User created successfully'
       });
@@ -68,7 +69,7 @@ describe('Users routes', () => {
     it('should create a user with optional fields', async () => {
       const res = await factory.app.post(CREATE_ROUTE).send(mockUsers.validWithOptional);
 
-      expect(res.status).toBe(201);
+      expect(res.status).toBe(HTTP_STATUS.CREATED);
       expect(res.body.data).toHaveProperty('id');
     });
 
@@ -76,7 +77,7 @@ describe('Users routes', () => {
       await factory.app.post(CREATE_ROUTE).send(mockUsers.valid);
       const res = await factory.app.post(CREATE_ROUTE).send(mockUsers.valid);
 
-      expect(res.status).toBe(409);
+      expect(res.status).toBe(HTTP_STATUS.CONFLICT);
       expect(res.body.message).toBe('Email already exists');
     });
 
@@ -88,7 +89,7 @@ describe('Users routes', () => {
       };
       const res = await factory.app.post(CREATE_ROUTE).send(invalidData);
 
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(HTTP_STATUS.BAD_REQUEST);
       expect(res.body).toHaveProperty('errors');
     });
   });
