@@ -1,25 +1,9 @@
 import { ArtistRepository } from '../../src/repositories';
 import { HTTP_STATUS } from '../../src/utils/const';
 import { TestFactory } from '../factory';
-
-const mockArtists = {
-  valid: {
-    name: 'John Doe',
-    email: 'johndoe@example.com',
-    password: 'SecurePass123!',
-    genre: ['Rock', 'Blues'],
-    bio: 'Professional musician with 10 years of experience.'
-  },
-  validWithoutBio: {
-    name: 'Jane Smith',
-    email: 'janesmith@example.com',
-    password: 'MyPass456@',
-    genre: ['Pop', 'Electronic']
-  }
-};
+import { mockArtists } from '../mocks/data';
 
 const SIGNUP_ROUTE = '/artists/signup';
-const LOGIN_ROUTE = '/auth/login';
 const GET_ARTISTS_ROUTE = '/artists';
 
 describe('Artist routes', () => {
@@ -75,53 +59,6 @@ describe('Artist routes', () => {
 
       expect(res.status).toBe(HTTP_STATUS.BAD_REQUEST);
       expect(res.body).toHaveProperty('errors');
-    });
-
-    it('should login artist with valid data', async () => {
-      await factory.app.post(SIGNUP_ROUTE).send(mockArtists.valid);
-
-      const res = await factory.app.post(LOGIN_ROUTE).send({
-        email: mockArtists.valid.email,
-        password: mockArtists.valid.password
-      });
-
-      expect(res.status).toBe(HTTP_STATUS.OK);
-      expect(res.body).toMatchObject({
-        message: 'Login successfully'
-      });
-      expect(res.body).toHaveProperty('token');
-      expect(res.body.data).toHaveProperty('id');
-      expect(res.body.data).toHaveProperty('name');
-      expect(res.body.data).toHaveProperty('email');
-      expect(res.body.data).toHaveProperty('role');
-    });
-
-    it('should return 404 for invalid email', async () => {
-      const res = await factory.app.post(LOGIN_ROUTE).send({
-        email: 'invalidemail@example.com',
-        password: mockArtists.valid.password
-      });
-
-      expect(res.status).toBe(HTTP_STATUS.NOT_FOUND);
-      expect(res.body).toMatchObject({
-        message: 'Invalid credentials'
-      });
-      expect(res.body).toHaveProperty('message');
-    });
-
-    it('should return 401 for incorrect password', async () => {
-      await factory.app.post(SIGNUP_ROUTE).send(mockArtists.valid);
-
-      const res = await factory.app.post(LOGIN_ROUTE).send({
-        email: mockArtists.valid.email,
-        password: 'validPassword@419'
-      });
-
-      expect(res.status).toBe(HTTP_STATUS.BAD_REQUEST);
-      expect(res.body).toMatchObject({
-        message: 'Invalid credentials'
-      });
-      expect(res.body).toHaveProperty('message');
     });
   });
 
