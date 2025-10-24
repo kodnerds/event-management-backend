@@ -1,3 +1,4 @@
+import { UserRepository } from '../../src/repositories';
 import { HTTP_STATUS } from '../../src/utils/const';
 import { TestFactory } from '../factory';
 
@@ -28,6 +29,7 @@ const mockUsers = {
 
 const CREATE_ROUTE = '/users/signup';
 const LOGIN_ROUTE = '/auth/login';
+const GET_USERS_ROUTE = '/users';
 
 describe('Users routes', () => {
   const factory = new TestFactory();
@@ -45,21 +47,84 @@ describe('Users routes', () => {
   });
 
   describe('GET /users', () => {
-    it('should fetch empty record when no record exist', async () => {
-      const res = await factory.app.get('/users');
-
-      expect(res.status).toBe(HTTP_STATUS.OK);
-      expect(res.body).toHaveLength(0);
-    });
-
-    it('should return all users when users exist', async () => {
+    it('should retrieve all users with limited fields', async () => {
       await factory.app.post(CREATE_ROUTE).send(mockUsers.valid);
       await factory.app.post(CREATE_ROUTE).send(mockUsers.validWithOptional);
 
-      const res = await factory.app.get('/users');
+      const response = await factory.app.get(GET_USERS_ROUTE);
 
-      expect(res.status).toBe(HTTP_STATUS.OK);
-      expect(res.body).toHaveLength(2);
+      expect(response.status).toBe(HTTP_STATUS.OK);
+      expect(response.body).toHaveProperty('data');
+      expect(Array.isArray(response.body.data)).toBe(true);
+      expect(response.body.data).toHaveLength(2);
+
+      const firstUser = response.body.data[0];
+
+      // Verify expected fields exist
+      expect(firstUser).toHaveProperty('id');
+      expect(firstUser).toHaveProperty('firstName');
+      expect(firstUser).toHaveProperty('lastName');
+      expect(firstUser).toHaveProperty('email');
+      expect(firstUser).toHaveProperty('favouriteGenres');
+      expect(firstUser).toHaveProperty('location');
+
+      // Verify password is excluded
+      expect(firstUser).not.toHaveProperty('password');
+    });
+
+    it('should return empty array when no users exist', async () => {
+      const response = await factory.app.get(GET_USERS_ROUTE);
+
+      expect(response.status).toBe(HTTP_STATUS.OK);
+      expect(response.body.data).toEqual([]);
+      expect(response.body.pagination.total).toBe(0);
+      expect(response.body.message).toBe('Users retrieved successfully');
+    });
+
+    it('should handle database errors gracefully', async () => {
+      jest
+        .spyOn(UserRepository.prototype, 'findAll')
+        .mockRejectedValueOnce(new Error('Database error'));
+
+      const response = await factory.app.get(GET_USERS_ROUTE);
+      expect(response.status).toBe(HTTP_STATUS.INTERNAL_SERVER_ERROR);
+      expect(response.body).toHaveProperty('message', 'Internal server error');
+    });
+
+    it('should support pagination with page and limit parameters', async () => {
+      // Create 3 users
+      await factory.app.post(CREATE_ROUTE).send(mockUsers.valid);
+      await factory.app.post(CREATE_ROUTE).send(mockUsers.validWithOptional);
+      await factory.app.post(CREATE_ROUTE).send(mockUsers.adminValidData);
+
+      const response = await factory.app.get(GET_USERS_ROUTE).query({ page: 1, limit: 2 });
+
+      expect(response.status).toBe(HTTP_STATUS.OK);
+      expect(response.body.data).toHaveLength(2);
+      expect(response.body.pagination).toMatchObject({
+        currentPage: 1,
+        limit: 2,
+        total: 3,
+        totalPages: 2
+      });
+    });
+
+    it('should return second page when page parameter is provided', async () => {
+      // Create 3 users
+      await factory.app.post(CREATE_ROUTE).send(mockUsers.valid);
+      await factory.app.post(CREATE_ROUTE).send(mockUsers.validWithOptional);
+      await factory.app.post(CREATE_ROUTE).send(mockUsers.adminValidData);
+
+      const response = await factory.app.get(GET_USERS_ROUTE).query({ page: 2, limit: 2 });
+
+      expect(response.status).toBe(HTTP_STATUS.OK);
+      expect(response.body.data).toHaveLength(1);
+      expect(response.body.pagination).toMatchObject({
+        currentPage: 2,
+        limit: 2,
+        total: 3,
+        totalPages: 2
+      });
     });
   });
 
