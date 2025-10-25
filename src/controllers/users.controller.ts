@@ -1,19 +1,35 @@
 import { UserRole } from '../entities';
 import { UserRepository } from '../repositories';
 import { HTTP_STATUS } from '../utils/const';
+import { getPaginationParams } from '../utils/getPaginationParams';
 import { hashPassword } from '../utils/hash';
 import logger from '../utils/logger';
 
 import type { Request, Response } from 'express';
 
-export const getUsers = async (_: Request, res: Response) => {
+export const getUsers = async (req: Request, res: Response) => {
   try {
     const userRepository = new UserRepository();
-    const users = await userRepository.findAll();
-    return res.send(users);
+    const { page, limit, offset } = getPaginationParams(req.query);
+
+    const [users, total] = await Promise.all([
+      userRepository.findAll({ skip: offset, take: limit }),
+      userRepository.count()
+    ]);
+
+    return res.status(HTTP_STATUS.OK).json({
+      message: 'Users retrieved successfully',
+      data: users,
+      pagination: {
+        currentPage: page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
   } catch (error) {
     logger.error('Error fetching users:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send({ message: 'Error fetching users' });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ message: 'Internal server error' });
   }
 };
 
