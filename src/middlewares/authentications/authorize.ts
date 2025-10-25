@@ -1,11 +1,11 @@
 import { HTTP_STATUS } from '../../utils/const';
 import logger from '../../utils/logger';
 
-import type { ExtendedRequest } from '../../types';
+import type { ExtendedRequest, Role } from '../../types';
 import type { NextFunction, Response } from 'express';
 
 export const authorize =
-  (allowedRoles: string[]) =>
+  (allowedRoles: Role[]) =>
   (req: ExtendedRequest, res: Response, next: NextFunction): void => {
     try {
       if (!req.user) {

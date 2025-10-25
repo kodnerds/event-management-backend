@@ -41,4 +41,9 @@ export class ArtistRepository {
   async count(): Promise<number> {
     return await this.repository.count();
   }
+
+  async findAndUpdate(id: string, update: Partial<ArtistEntity>): Promise<ArtistEntity | null> {
+    await this.repository.update(id, update);
+    return await this.repository.findOneBy({ id });
+  }
 }

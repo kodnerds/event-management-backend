@@ -9,6 +9,7 @@ import type { AuthenticatedUser } from '../../src/types';
 const SIGNUP_ROUTE = '/artists/signup';
 const GET_ARTISTS_ROUTE = '/artists';
 const ARTIST_ME_ROUTE = '/artists/me';
+const UPDATE_ARTIST_ROUTE = '/artists/update';
 
 describe('Artist routes', () => {
   const factory = new TestFactory();
@@ -168,6 +169,100 @@ describe('Artist routes', () => {
       expect(response.body).toEqual({
         message: 'Forbidden: You do not have permission to access this resource.'
       });
+    });
+  });
+
+  describe('PATCH /artists/update', () => {
+    it('should successfully update artist profile with partial fields', async () => {
+      const createResponse = await factory.app.post(SIGNUP_ROUTE).send(mockArtists.valid);
+      const artistId = createResponse.body.data.id;
+
+      const artistUser: AuthenticatedUser = {
+        id: artistId,
+        email: mockArtists.valid.email,
+        role: 'ARTIST',
+        name: mockArtists.valid.name
+      };
+      const token = generateTestAuthToken(artistUser);
+
+      const updatePayload = {
+        name: 'Johnny Updated',
+        genre: ['Jazz', 'Soul']
+      };
+
+      const updateResponse = await factory.app
+        .patch(UPDATE_ARTIST_ROUTE)
+        .set('Authorization', `Bearer ${token}`)
+        .send(updatePayload);
+
+      expect(updateResponse.status).toBe(HTTP_STATUS.OK);
+      expect(updateResponse.body).toMatchObject({
+        message: 'Artist profile updated successfully',
+        data: {
+          id: artistId,
+          name: updatePayload.name,
+          genre: updatePayload.genre
+        }
+      });
+      expect(updateResponse.body.data).not.toHaveProperty('password');
+    });
+
+    it('should return 401 when no authorization token is provided', async () => {
+      const updateResponse = await factory.app
+        .patch(UPDATE_ARTIST_ROUTE)
+        .send({ name: 'Should Fail' });
+
+      expect(updateResponse.status).toBe(HTTP_STATUS.UNAUTHORIZED);
+      expect(updateResponse.body).toEqual({
+        message: 'User is not authorized or token is missing'
+      });
+    });
+
+    it('should return 403 when user does not have ARTIST role', async () => {
+      const userWithWrongRole: AuthenticatedUser = {
+        id: '123',
+        email: 'user@test.com',
+        role: 'USER',
+        name: 'Regular User'
+      };
+      const token = generateTestAuthToken(userWithWrongRole);
+
+      const updateResponse = await factory.app
+        .patch(UPDATE_ARTIST_ROUTE)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ name: 'Should Fail' });
+
+      expect(updateResponse.status).toBe(HTTP_STATUS.FORBIDDEN);
+      expect(updateResponse.body).toEqual({
+        message: 'Forbidden: You do not have permission to access this resource.'
+      });
+    });
+
+    it('should return 400 for validation errors (empty genre, restricted fields)', async () => {
+      const createResponse = await factory.app.post(SIGNUP_ROUTE).send(mockArtists.valid);
+      const artistId = createResponse.body.data.id;
+
+      const artistUser: AuthenticatedUser = {
+        id: artistId,
+        email: mockArtists.valid.email,
+        role: 'ARTIST',
+        name: mockArtists.valid.name
+      };
+      const token = generateTestAuthToken(artistUser);
+
+      const invalidPayload = {
+        genre: [],
+        email: 'newemail@example.com'
+      };
+
+      const updateResponse = await factory.app
+        .patch(UPDATE_ARTIST_ROUTE)
+        .set('Authorization', `Bearer ${token}`)
+        .send(invalidPayload);
+
+      expect(updateResponse.status).toBe(HTTP_STATUS.BAD_REQUEST);
+      expect(updateResponse.body).toHaveProperty('message', 'Validation error');
+      expect(updateResponse.body.errors).toBeDefined();
     });
   });
 });
