@@ -6,16 +6,8 @@ import { HTTP_STATUS } from '../utils/const';
 import { comparePassword } from '../utils/hash';
 import logger from '../utils/logger';
 
+import type { AuthenticatedUser } from '../types';
 import type { Request, Response } from 'express';
-
-type Role = 'USER' | 'ARTIST' | 'ADMIN';
-
-interface AuthenticatedUser {
-  id: string;
-  name: string;
-  email: string;
-  role: Role;
-}
 
 export const login = async (req: Request, res: Response): Promise<Response> => {
   try {

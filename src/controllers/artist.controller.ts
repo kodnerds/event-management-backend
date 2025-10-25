@@ -4,6 +4,7 @@ import { getPaginationParams } from '../utils/getPaginationParams';
 import { hashPassword } from '../utils/hash';
 import logger from '../utils/logger';
 
+import type { ExtendedRequest } from '../types';
 import type { Request, Response } from 'express';
 
 export const createArtist = async (req: Request, res: Response) => {
@@ -34,7 +35,8 @@ export const createArtist = async (req: Request, res: Response) => {
       message: 'Artist created successfully',
       data: {
         id: newArtist.id,
-        name: newArtist.name
+        name: newArtist.name,
+        email: newArtist.email
       }
     });
   } catch (error) {
@@ -70,3 +72,6 @@ export const getArtists = async (req: Request, res: Response) => {
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ message: 'Internal server error' });
   }
 };
+
+export const getCurrentArtist = (req: ExtendedRequest, res: Response) =>
+  res.send({ message: 'Current artist', data: req.user });

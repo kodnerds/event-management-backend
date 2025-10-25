@@ -1,13 +1,12 @@
 import { Router } from 'express';
 
-import { createArtist, getArtists } from '../controllers';
-import { signupValidation, validate } from '../middlewares';
-import { authenticate } from '../middlewares/authentications/authenticate';
-import { authorize } from '../middlewares/authentications/authorize';
+import { createArtist, getArtists, getCurrentArtist } from '../controllers';
+import { authenticate, authorize, signupValidation, validate } from '../middlewares';
 
 const router = Router();
 
 router.post('/signup', signupValidation, validate, createArtist);
-router.get('/', authenticate, authorize(['ARTIST']), getArtists);
+router.get('/', getArtists);
+router.get('/me', authenticate, authorize(['ARTIST']), getCurrentArtist);
 
 export default router;

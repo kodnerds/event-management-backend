@@ -2,9 +2,13 @@ import { ArtistRepository } from '../../src/repositories';
 import { HTTP_STATUS } from '../../src/utils/const';
 import { TestFactory } from '../factory';
 import { mockArtists } from '../mocks/data';
+import { generateTestAuthToken } from '../mocks/utils';
+
+import type { AuthenticatedUser } from '../../src/types';
 
 const SIGNUP_ROUTE = '/artists/signup';
 const GET_ARTISTS_ROUTE = '/artists';
+const ARTIST_ME_ROUTE = '/artists/me';
 
 describe('Artist routes', () => {
   const factory = new TestFactory();
@@ -98,6 +102,72 @@ describe('Artist routes', () => {
       const response = await factory.app.get(GET_ARTISTS_ROUTE);
       expect(response.status).toBe(HTTP_STATUS.INTERNAL_SERVER_ERROR);
       expect(response.body).toHaveProperty('message', 'Internal server error');
+    });
+  });
+
+  describe('GET /api/artists/me', () => {
+    const artistUser: AuthenticatedUser = {
+      id: '123',
+      email: 'artist@test.com',
+      role: 'ARTIST',
+      name: 'Test Artist'
+    };
+
+    it('should return current artist data when authenticated with ARTIST role', async () => {
+      const token = generateTestAuthToken(artistUser);
+
+      const response = await factory.app
+        .get(ARTIST_ME_ROUTE)
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(response.status).toBe(HTTP_STATUS.OK);
+      expect(response.body).toMatchObject({
+        message: 'Current artist',
+        data: {
+          id: artistUser.id,
+          email: artistUser.email,
+          role: artistUser.role,
+          name: artistUser.name
+        }
+      });
+    });
+
+    it('should return 401 when no authorization token is provided', async () => {
+      const response = await factory.app.get(ARTIST_ME_ROUTE);
+
+      expect(response.status).toBe(HTTP_STATUS.UNAUTHORIZED);
+      expect(response.body).toEqual({
+        message: 'User is not authorized or token is missing'
+      });
+    });
+
+    it('should return 401 when token is invalid', async () => {
+      const response = await factory.app
+        .get(ARTIST_ME_ROUTE)
+        .set('Authorization', 'Bearer invalid.token.here');
+
+      expect(response.status).toBe(HTTP_STATUS.UNAUTHORIZED);
+      expect(response.body).toEqual({
+        message: 'User is not authorized or token is invalid'
+      });
+    });
+
+    it('should return 403 when user does not have ARTIST role', async () => {
+      const userWithWrongRole: AuthenticatedUser = {
+        ...artistUser,
+        role: 'USER'
+      };
+
+      const token = generateTestAuthToken(userWithWrongRole);
+
+      const response = await factory.app
+        .get(ARTIST_ME_ROUTE)
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(response.status).toBe(HTTP_STATUS.FORBIDDEN);
+      expect(response.body).toEqual({
+        message: 'Forbidden: You do not have permission to access this resource.'
+      });
     });
   });
 });

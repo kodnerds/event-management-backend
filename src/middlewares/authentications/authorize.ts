@@ -1,28 +1,29 @@
+import { HTTP_STATUS } from '../../utils/const';
 import logger from '../../utils/logger';
 
-import type { NextFunction, Request, Response } from 'express';
-import type { JwtPayload } from 'jsonwebtoken';
-
-interface CustomRequest extends Request {
-  user?: JwtPayload & { role?: string };
-}
+import type { ExtendedRequest } from '../../types';
+import type { NextFunction, Response } from 'express';
 
 export const authorize =
   (allowedRoles: string[]) =>
-  (req: CustomRequest, res: Response, next: NextFunction): void => {
+  (req: ExtendedRequest, res: Response, next: NextFunction): void => {
     try {
       if (!req.user) {
-        res.status(401).json({ message: 'Unauthorized: No user found in request' });
+        res
+          .status(HTTP_STATUS.UNAUTHORIZED)
+          .json({ message: 'Unauthorized: No user found in request' });
       }
 
-      const userRole = req.user?.role;
-      if (!allowedRoles.includes(userRole ?? '')) {
-        res.status(403).json({ message: 'Forbidden: You do not have permission to access this resource.' });
+      const userRole = req.user!.role;
+      if (!allowedRoles.includes(userRole)) {
+        res
+          .status(HTTP_STATUS.FORBIDDEN)
+          .json({ message: 'Forbidden: You do not have permission to access this resource.' });
       }
 
       next();
     } catch (error) {
       logger.error('Authorization error:', error);
-      res.status(500).json({ message: 'Authorization error' });
+      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ message: 'Authorization error' });
     }
   };
