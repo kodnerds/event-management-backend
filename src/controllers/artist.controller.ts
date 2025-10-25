@@ -77,47 +77,45 @@ export const getArtists = async (req: Request, res: Response) => {
 export const getCurrentArtist = (req: ExtendedRequest, res: Response) =>
   res.send({ message: 'Current artist', data: req.user });
 
-export const updateArtist = async (req: Request, res: Response) => {
+export const updateArtist = async (req: ExtendedRequest, res: Response) => {
   try {
     const { name, genre, bio } = req.body;
-    const { id } = req.params;
+    const artistId = req.user?.id;
+
+    if (!artistId) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({ message: 'User is not authenticated' });
+    }
 
     const artistRepository = new ArtistRepository();
 
-    let existingArtist: ArtistEntity | null = null;
-
-    try {
-      existingArtist = await artistRepository.findById(id);
-    } catch {
-      return res.status(404).json({ message: 'Artist does not exist' });
-    }
+    const existingArtist = await artistRepository.findById(artistId);
 
     if (!existingArtist) {
-      return res.status(404).json({ message: 'Artist does not exist' });
-      return res.status(404).json({ message: 'Artist does not exist' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ message: 'Artist does not exist' });
     }
 
     const updateData: Partial<ArtistEntity> = {};
 
-    if (name) updateData.name = name;
-    if (genre) updateData.genre = genre;
-    if (bio) updateData.bio = bio;
-    updateData.updatedAt = new Date();
+    if (name !== undefined) updateData.name = name;
+    if (genre !== undefined) updateData.genre = genre;
+    if (bio !== undefined) updateData.bio = bio;
 
-    const updatedArtist = await artistRepository.findAndUpdate(id, updateData);
+    const updatedArtist = await artistRepository.findAndUpdate(artistId, updateData);
 
     if (!updatedArtist) {
-      return res.status(404).json({ message: 'Artist could not be updated' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ message: 'Artist could not be updated' });
     }
 
     const { password, ...artistData } = updatedArtist;
 
-    return res.status(200).json({
-      message: 'Artist updated successfully',
+    return res.status(HTTP_STATUS.OK).json({
+      message: 'Artist profile updated successfully',
       data: artistData
     });
   } catch (error) {
     logger.error('Error updating artist:', error);
-    return res.status(500).json({ message: `Server error: ${error}` });
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ message: `Server error: ${error}` });
   }
 };

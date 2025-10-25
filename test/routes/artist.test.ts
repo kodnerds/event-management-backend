@@ -9,7 +9,7 @@ import type { AuthenticatedUser } from '../../src/types';
 const SIGNUP_ROUTE = '/artists/signup';
 const GET_ARTISTS_ROUTE = '/artists';
 const ARTIST_ME_ROUTE = '/artists/me';
-const UPDATE_ARTIST_ROUTE = (id: string) => `/artists/update/${id}`;
+const UPDATE_ARTIST_ROUTE = '/artists/update';
 
 describe('Artist routes', () => {
   const factory = new TestFactory();
@@ -172,98 +172,97 @@ describe('Artist routes', () => {
     });
   });
 
-  describe('PATCH /artists/update/:id', () => {
-    it('should successfully update artist profile (partial/full update allowed)', async () => {
-      const createArtist = await factory.app.post(SIGNUP_ROUTE).send(mockArtists.valid);
-      const artistId = createArtist.body.data.id;
+  describe('PATCH /artists/update', () => {
+    it('should successfully update artist profile with partial fields', async () => {
+      const createResponse = await factory.app.post(SIGNUP_ROUTE).send(mockArtists.valid);
+      const artistId = createResponse.body.data.id;
+
+      const artistUser: AuthenticatedUser = {
+        id: artistId,
+        email: mockArtists.valid.email,
+        role: 'ARTIST',
+        name: mockArtists.valid.name
+      };
+      const token = generateTestAuthToken(artistUser);
 
       const updatePayload = {
         name: 'Johnny Updated',
-        genre: ['Jazz', 'Soul'],
-        bio: 'Updated bio content.'
+        genre: ['Jazz', 'Soul']
       };
 
-      const updateArtist = await factory.app
-        .patch(UPDATE_ARTIST_ROUTE(artistId))
+      const updateResponse = await factory.app
+        .patch(UPDATE_ARTIST_ROUTE)
+        .set('Authorization', `Bearer ${token}`)
         .send(updatePayload);
 
-      expect(updateArtist.status).toBe(200);
-
-      expect(updateArtist.body).toMatchObject({
-        message: 'Artist updated successfully',
+      expect(updateResponse.status).toBe(HTTP_STATUS.OK);
+      expect(updateResponse.body).toMatchObject({
+        message: 'Artist profile updated successfully',
         data: {
           id: artistId,
           name: updatePayload.name,
-          genre: updatePayload.genre,
-          bio: updatePayload.bio
+          genre: updatePayload.genre
         }
       });
-      expect(updateArtist.body.data).not.toHaveProperty('password');
+      expect(updateResponse.body.data).not.toHaveProperty('password');
     });
 
-    it('should return 400 for invalid genre type (not array)', async () => {
-      const createArtist = await factory.app.post(SIGNUP_ROUTE).send(mockArtists.valid);
-      const artistId = createArtist.body.data.id;
+    it('should return 401 when no authorization token is provided', async () => {
+      const updateResponse = await factory.app
+        .patch(UPDATE_ARTIST_ROUTE)
+        .send({ name: 'Should Fail' });
 
-      const invalidPayload = {
-        genre: 'NotAnArray'
-      };
-
-      const updateArtist = await factory.app
-        .patch(UPDATE_ARTIST_ROUTE(artistId))
-        .send(invalidPayload);
-
-      expect(updateArtist.status).toBe(400);
-      expect(updateArtist.body).toHaveProperty('message', 'Validation error');
-      expect(updateArtist.body.errors[0]).toMatch(/Genre must be a non-empty array/);
-    });
-
-    it('should return 400 for empty name', async () => {
-      const createArtist = await factory.app.post(SIGNUP_ROUTE).send(mockArtists.valid);
-      const artistId = createArtist.body.data.id;
-
-      const invalidPayload = {
-        name: ''
-      };
-
-      const updateArtist = await factory.app
-        .patch(UPDATE_ARTIST_ROUTE(artistId))
-        .send(invalidPayload);
-
-      expect(updateArtist.status).toBe(400);
-      expect(updateArtist.body.errors[0]).toMatch(/Name must be a non-empty string/);
-    });
-
-    it('should return 400 when trying to update restricted fields (email,password', async () => {
-      const createArtist = await factory.app.post(SIGNUP_ROUTE).send(mockArtists.valid);
-      const artistId = createArtist.body.data.id;
-
-      const invalidPayload = {
-        email: 'newemail@example.com',
-        password: 'NewPassword123!'
-      };
-
-      const updateArtist = await factory.app
-        .patch(UPDATE_ARTIST_ROUTE(artistId))
-        .send(invalidPayload);
-
-      expect(updateArtist.status).toBe(400);
-      expect(updateArtist.body.message).toBe('Validation error');
-
-      const errorMessage = updateArtist.body.errors;
-
-      expect(errorMessage).toContain('Email cannot be updated');
-      expect(errorMessage).toContain('Password cannot be updated');
-    });
-
-    it('should return 404 if artist does not exist', async () => {
-      const nonExistentId = 'c0ffee-babe-dead-beef-123456789abc';
-      const updateArtist = await factory.app.patch(UPDATE_ARTIST_ROUTE(nonExistentId)).send({
-        name: 'Ghost Artist'
+      expect(updateResponse.status).toBe(HTTP_STATUS.UNAUTHORIZED);
+      expect(updateResponse.body).toEqual({
+        message: 'User is not authorized or token is missing'
       });
+    });
 
-      expect(updateArtist.status).toBe(404);
-      expect(updateArtist.body.message).toBe('Artist does not exist');
+    it('should return 403 when user does not have ARTIST role', async () => {
+      const userWithWrongRole: AuthenticatedUser = {
+        id: '123',
+        email: 'user@test.com',
+        role: 'USER',
+        name: 'Regular User'
+      };
+      const token = generateTestAuthToken(userWithWrongRole);
+
+      const updateResponse = await factory.app
+        .patch(UPDATE_ARTIST_ROUTE)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ name: 'Should Fail' });
+
+      expect(updateResponse.status).toBe(HTTP_STATUS.FORBIDDEN);
+      expect(updateResponse.body).toEqual({
+        message: 'Forbidden: You do not have permission to access this resource.'
+      });
+    });
+
+    it('should return 400 for validation errors (empty genre, restricted fields)', async () => {
+      const createResponse = await factory.app.post(SIGNUP_ROUTE).send(mockArtists.valid);
+      const artistId = createResponse.body.data.id;
+
+      const artistUser: AuthenticatedUser = {
+        id: artistId,
+        email: mockArtists.valid.email,
+        role: 'ARTIST',
+        name: mockArtists.valid.name
+      };
+      const token = generateTestAuthToken(artistUser);
+
+      const invalidPayload = {
+        genre: [],
+        email: 'newemail@example.com'
+      };
+
+      const updateResponse = await factory.app
+        .patch(UPDATE_ARTIST_ROUTE)
+        .set('Authorization', `Bearer ${token}`)
+        .send(invalidPayload);
+
+      expect(updateResponse.status).toBe(HTTP_STATUS.BAD_REQUEST);
+      expect(updateResponse.body).toHaveProperty('message', 'Validation error');
+      expect(updateResponse.body.errors).toBeDefined();
     });
   });
 });

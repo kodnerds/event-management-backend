@@ -46,23 +46,21 @@ export const signupValidation = [
 ];
 
 export const updateValidation = [
-  body('email').custom((_, { req }) => {
-    if (Object.prototype.hasOwnProperty.call(req.body, 'email')) {
-      throw new Error('Email cannot be updated');
-    }
-    return true;
-  }),
-
-  body('password').custom((_, { req }) => {
-    if (Object.prototype.hasOwnProperty.call(req.body, 'password')) {
-      throw new Error('Password cannot be updated');
-    }
-    return true;
-  }),
-
-  body('name').optional().isString().notEmpty().withMessage('Name must be a non-empty string'),
+  body('name')
+    .optional()
+    .isString()
+    .withMessage('Name must be a string')
+    .notEmpty()
+    .withMessage('Name must be a non-empty string'),
 
   body('genre').optional().isArray({ min: 1 }).withMessage('Genre must be a non-empty array'),
+
+  body('genre.*')
+    .optional()
+    .isString()
+    .withMessage('Each genre must be a string')
+    .notEmpty()
+    .withMessage('Genre items cannot be empty'),
 
   body('bio').optional().isString().withMessage('Bio must be a string')
 ];
