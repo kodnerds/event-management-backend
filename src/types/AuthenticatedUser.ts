@@ -6,3 +6,11 @@ export interface AuthenticatedUser {
   email: string;
   role: Role;
 }
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: AuthenticatedUser;
+    }
+  }
+}

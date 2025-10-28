@@ -4,10 +4,10 @@ import envConfig from '../../config/envConfig';
 import { HTTP_STATUS } from '../../utils/const';
 import logger from '../../utils/logger';
 
-import type { AuthenticatedUser, ExtendedRequest } from '../../types';
-import type { NextFunction, Response } from 'express';
+import type { AuthenticatedUser } from '../../types';
+import type { NextFunction, Request, Response } from 'express';
 
-export const authenticate = (req: ExtendedRequest, res: Response, next: NextFunction): void => {
+export const authenticate = (req: Request, res: Response, next: NextFunction): void => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader?.startsWith('Bearer ')) {

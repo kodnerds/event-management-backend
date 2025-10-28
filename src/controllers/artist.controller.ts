@@ -5,7 +5,6 @@ import { hashPassword } from '../utils/hash';
 import logger from '../utils/logger';
 
 import type { ArtistEntity } from '../entities';
-import type { ExtendedRequest } from '../types';
 import type { Request, Response } from 'express';
 
 export const createArtist = async (req: Request, res: Response) => {
@@ -37,7 +36,8 @@ export const createArtist = async (req: Request, res: Response) => {
       data: {
         id: newArtist.id,
         name: newArtist.name,
-        email: newArtist.email
+        email: newArtist.email,
+        role: 'ARTIST'
       }
     });
   } catch (error) {
@@ -74,10 +74,10 @@ export const getArtists = async (req: Request, res: Response) => {
   }
 };
 
-export const getCurrentArtist = (req: ExtendedRequest, res: Response) =>
+export const getCurrentArtist = (req: Request, res: Response) =>
   res.send({ message: 'Current artist', data: req.user });
 
-export const updateArtist = async (req: ExtendedRequest, res: Response) => {
+export const updateArtist = async (req: Request, res: Response) => {
   try {
     const { name, genre, bio } = req.body;
     const artistId = req.user?.id;

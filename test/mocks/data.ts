@@ -13,3 +13,24 @@ export const mockArtists = {
     genre: ['Pop', 'Electronic']
   }
 };
+
+export const mockShows = {
+  valid: {
+    id: '3241980',
+    title: 'Davido in Uyo',
+    description: 'Davido is performing live in one of Nigeria growing city',
+    location: 'Uyo',
+    date: '2025-12-15T20:00:00Z',
+    ticketPrice: 10000,
+    availableTickets: 45000
+  },
+  invalid: {
+    id: '3241980',
+    title: 'D',
+    description: 'Davido is performing live in one of Nigeria growing city',
+    location: 'U',
+    date: '2025-12-15',
+    ticketPrice: 0,
+    availableTickets: 45000
+  }
+};
