@@ -4,11 +4,13 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn
 } from 'typeorm';
 
 import { ArtistEntity } from './ArtistEntity';
+import { RSVP } from './RsvpEntity';
 
 @Entity('shows')
 export class ShowEntity {
@@ -39,6 +41,9 @@ export class ShowEntity {
 
   @Column({ type: 'int', nullable: true })
   availableTickets?: number;
+
+  @OneToMany(() => RSVP, (rsvp) => rsvp.show)
+  rsvps: RSVP[];
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
