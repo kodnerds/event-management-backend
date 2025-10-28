@@ -24,13 +24,13 @@ export const mockShows = {
     ticketPrice: 10000,
     availableTickets: 45000
   },
-  invalid:{
+  invalid: {
     id: '3241980',
     title: 'D',
     description: 'Davido is performing live in one of Nigeria growing city',
     location: 'U',
     date: '2025-12-15',
-    ticketPrice: '',
-    availableTickets: '45000'
+    ticketPrice: 0,
+    availableTickets: 45000
   }
-}
+};

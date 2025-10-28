@@ -11,15 +11,6 @@ import {
 import { ShowEntity } from './ShowEntity';
 import { UserEntity } from './UserEntity';
 
-
-declare global {
-    namespace Express {
-        interface Request{
-            user?: ArtistEntity 
-        }
-    }
-}
-
 @Entity('artists')
 export class ArtistEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -49,6 +40,6 @@ export class ArtistEntity {
   @ManyToMany(() => UserEntity, (user) => user.favouriteArtists)
   followers: UserEntity[];
 
-  @OneToMany(() => ShowEntity,(show) => show.artist)
-  shows: ShowEntity[]
+  @OneToMany(() => ShowEntity, (show) => show.artist)
+  shows: ShowEntity[];
 }
