@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
   Unique,
@@ -13,14 +14,22 @@ import { UserEntity } from './UserEntity';
 
 @Entity('rsvps')
 @Unique(['user', 'show'])
-export class RSVP {
+export class RsvpEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column()
+  userId: string;
+
   @ManyToOne(() => UserEntity, (user) => user.rsvps, { eager: true, onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'userId' })
   user: UserEntity;
 
+  @Column()
+  showId: string;
+
   @ManyToOne(() => ShowEntity, (show) => show.rsvps, { eager: true, onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'showId' })
   show: ShowEntity;
 
   @Column({

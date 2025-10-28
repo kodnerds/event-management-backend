@@ -3,7 +3,18 @@ import { TestFactory } from '../factory';
 import { mockArtists } from '../mocks/data';
 
 const LOGIN_ROUTE = '/auth/login';
-const SIGNUP_ROUTE = '/artists/signup';
+const ARTIST_SIGNUP_ROUTE = '/artists/signup';
+const USER_SIGNUP_ROUTE = '/users/signup';
+
+const mockUsers = {
+  valid: {
+    firstName: 'John',
+    lastName: 'Doe',
+    email: 'john.doe@example.com',
+    password: 'SecurePass123!',
+    role: 'USER'
+  }
+};
 
 describe('Auth Route', () => {
   const factory = new TestFactory();
@@ -20,50 +31,91 @@ describe('Auth Route', () => {
     await factory.reset();
   });
 
-  it('should login artist with valid data', async () => {
-    await factory.app.post(SIGNUP_ROUTE).send(mockArtists.valid);
+  describe('POST /auth/login - Artist', () => {
+    it('should login artist with valid credentials', async () => {
+      await factory.app.post(ARTIST_SIGNUP_ROUTE).send(mockArtists.valid);
 
-    const res = await factory.app.post(LOGIN_ROUTE).send({
-      email: mockArtists.valid.email,
-      password: mockArtists.valid.password
+      const res = await factory.app.post(LOGIN_ROUTE).send({
+        email: mockArtists.valid.email,
+        password: mockArtists.valid.password
+      });
+
+      expect(res.status).toBe(HTTP_STATUS.OK);
+      expect(res.body).toMatchObject({
+        message: 'Login successfully'
+      });
+      expect(res.body).toHaveProperty('token');
+      expect(res.body.data).toMatchObject({
+        id: expect.any(String),
+        name: mockArtists.valid.name,
+        email: mockArtists.valid.email,
+        role: 'ARTIST'
+      });
     });
 
-    expect(res.status).toBe(HTTP_STATUS.OK);
-    expect(res.body).toMatchObject({
-      message: 'Login successfully'
+    it('should return 400 for artist with incorrect password', async () => {
+      await factory.app.post(ARTIST_SIGNUP_ROUTE).send(mockArtists.valid);
+
+      const res = await factory.app.post(LOGIN_ROUTE).send({
+        email: mockArtists.valid.email,
+        password: 'WrongPassword@123'
+      });
+
+      expect(res.status).toBe(HTTP_STATUS.BAD_REQUEST);
+      expect(res.body).toEqual({
+        message: 'Invalid credentials'
+      });
     });
-    expect(res.body).toHaveProperty('token');
-    expect(res.body.data).toHaveProperty('id');
-    expect(res.body.data).toHaveProperty('name');
-    expect(res.body.data).toHaveProperty('email');
-    expect(res.body.data).toHaveProperty('role');
   });
 
-  it('should return 404 for invalid email', async () => {
-    const res = await factory.app.post(LOGIN_ROUTE).send({
-      email: 'invalidemail@example.com',
-      password: mockArtists.valid.password
+  describe('POST /auth/login - User', () => {
+    it('should login user with valid credentials', async () => {
+      await factory.app.post(USER_SIGNUP_ROUTE).send(mockUsers.valid);
+
+      const res = await factory.app.post(LOGIN_ROUTE).send({
+        email: mockUsers.valid.email,
+        password: mockUsers.valid.password
+      });
+
+      expect(res.status).toBe(HTTP_STATUS.OK);
+      expect(res.body).toMatchObject({
+        message: 'Login successfully'
+      });
+      expect(res.body).toHaveProperty('token');
+      expect(res.body.data).toMatchObject({
+        id: expect.any(String),
+        name: `${mockUsers.valid.firstName} ${mockUsers.valid.lastName}`,
+        email: mockUsers.valid.email,
+        role: 'USER'
+      });
     });
 
-    expect(res.status).toBe(HTTP_STATUS.NOT_FOUND);
-    expect(res.body).toMatchObject({
-      message: 'Invalid credentials'
+    it('should return 400 for user with incorrect password', async () => {
+      await factory.app.post(USER_SIGNUP_ROUTE).send(mockUsers.valid);
+
+      const res = await factory.app.post(LOGIN_ROUTE).send({
+        email: mockUsers.valid.email,
+        password: 'WrongPassword@456'
+      });
+
+      expect(res.status).toBe(HTTP_STATUS.BAD_REQUEST);
+      expect(res.body).toEqual({
+        message: 'Invalid credentials'
+      });
     });
-    expect(res.body).toHaveProperty('message');
   });
 
-  it('should return 401 for incorrect password', async () => {
-    await factory.app.post(SIGNUP_ROUTE).send(mockArtists.valid);
+  describe('POST /auth/login - Common error cases', () => {
+    it('should return 404 for non-existent email', async () => {
+      const res = await factory.app.post(LOGIN_ROUTE).send({
+        email: 'nonexistent@example.com',
+        password: 'SomePassword123!'
+      });
 
-    const res = await factory.app.post(LOGIN_ROUTE).send({
-      email: mockArtists.valid.email,
-      password: 'validPassword@419'
+      expect(res.status).toBe(HTTP_STATUS.NOT_FOUND);
+      expect(res.body).toEqual({
+        message: 'Invalid credentials'
+      });
     });
-
-    expect(res.status).toBe(HTTP_STATUS.BAD_REQUEST);
-    expect(res.body).toMatchObject({
-      message: 'Invalid credentials'
-    });
-    expect(res.body).toHaveProperty('message');
   });
 });

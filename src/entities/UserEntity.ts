@@ -10,7 +10,7 @@ import {
 } from 'typeorm';
 
 import { ArtistEntity } from './ArtistEntity';
-import { RSVP } from './RsvpEntity';
+import { RsvpEntity } from './RsvpEntity';
 
 export enum UserRole {
   USER = 'USER',
@@ -51,8 +51,8 @@ export class UserEntity {
   @Column({ nullable: true })
   location: string;
 
-  @OneToMany(() => RSVP, (rsvp) => rsvp.user)
-  rsvps: RSVP[];
+  @OneToMany(() => RsvpEntity, (rsvp) => rsvp.user)
+  rsvps: RsvpEntity[];
 
   @CreateDateColumn()
   createdAt: Date;
