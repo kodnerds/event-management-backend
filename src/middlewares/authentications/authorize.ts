@@ -1,12 +1,12 @@
 import { HTTP_STATUS } from '../../utils/const';
 import logger from '../../utils/logger';
 
-import type { ExtendedRequest, Role } from '../../types';
-import type { NextFunction, Response } from 'express';
+import type { Role } from '../../types';
+import type { NextFunction, Request, Response } from 'express';
 
 export const authorize =
   (allowedRoles: Role[]) =>
-  (req: ExtendedRequest, res: Response, next: NextFunction): void => {
+  (req: Request, res: Response, next: NextFunction): void => {
     try {
       if (!req.user) {
         res

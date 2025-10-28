@@ -1,13 +1,12 @@
-import { ArtistRepository } from '../../src/repositories';
 import { HTTP_STATUS } from '../../src/utils/const';
 import { TestFactory } from '../factory';
-import { mockShows } from '../mocks/data';
+import { mockArtists, mockShows } from '../mocks/data';
 import { generateTestAuthToken } from '../mocks/utils';
 
-import type { ArtistEntity } from '../../src/entities';
 import type { AuthenticatedUser } from '../../src/types';
 
 const CREATE_SHOW_ROUTE = '/shows/create';
+const CREATE_ARTIST_ROUTE = '/artists/signup';
 
 describe('Show routes', () => {
   const factory = new TestFactory();
@@ -33,14 +32,11 @@ describe('Show routes', () => {
     };
 
     it('should create a new show successfully', async () => {
-      const token = generateTestAuthToken(artistUser);
-      jest.spyOn(ArtistRepository.prototype, 'findOne').mockResolvedValue({
-        id: artistUser.id,
-        name: artistUser.name,
-        email: artistUser.email,
-        genre: ['Afrobeats'],
-        bio: 'Mock bio'
-      } as ArtistEntity);
+      const res = await factory.app
+        .post(CREATE_ARTIST_ROUTE)
+        .send(mockArtists.valid)
+        .expect(HTTP_STATUS.CREATED);
+      const token = generateTestAuthToken(res.body.data);
 
       const response = await factory.app
         .post(CREATE_SHOW_ROUTE)
@@ -52,8 +48,8 @@ describe('Show routes', () => {
         message: 'Show created successfully',
         data: {
           title: mockShows.valid.title,
-          artistId: artistUser.id,
-          date: mockShows.valid.date
+          artistId: expect.any(String),
+          date: new Date(mockShows.valid.date).toISOString()
         }
       });
       expect(response.body.data).toHaveProperty('id');
@@ -67,7 +63,6 @@ describe('Show routes', () => {
         .send(mockShows.invalid);
 
       expect(response.status).toBe(HTTP_STATUS.BAD_REQUEST);
-      //expect(response.body).toHaveProperty('errors')
       expect(response.body).toHaveProperty('message', 'Validation error');
       expect(response.body.errors).toBeDefined();
     });

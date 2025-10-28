@@ -28,8 +28,18 @@ export const showValidation = [
     .notEmpty()
     .withMessage('Date is required')
     .isISO8601()
-    .withMessage('Date must be a valid ISO 8601 date'),
-
+    .withMessage('Date must be a valid ISO 8601 date')
+    .custom((value) => {
+      const showDate = new Date(value);
+      const now = new Date();
+      if (isNaN(showDate.getTime())) {
+        throw new Error('Invalid date');
+      }
+      if (showDate < now) {
+        throw new Error('Show date cannot be in the past');
+      }
+      return true;
+    }),
   body('ticketPrice')
     .optional()
     .isFloat({ min: 0 })

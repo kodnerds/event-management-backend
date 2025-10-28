@@ -2,41 +2,15 @@ import { ShowRepository } from '../repositories';
 import { HTTP_STATUS } from '../utils/const';
 import logger from '../utils/logger';
 
-import type { ExtendedRequest } from '../types';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 
-// eslint-disable-next-line max-lines-per-function
-export const createShow = async (req: ExtendedRequest, res: Response) => {
+export const createShow = async (req: Request, res: Response) => {
   try {
     const { title, description, location, date, ticketPrice, availableTickets } = req.body;
 
-    const user = req.user;
-
-    if (!user?.id) {
-      return res.status(HTTP_STATUS.UNAUTHORIZED).json({ message: 'Unauthorized access' });
-    }
+    const user = req.user!;
 
     const showDate = new Date(date);
-
-    if (isNaN(showDate.getTime())) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ message: 'Invalid date format' });
-    }
-
-    if (showDate < new Date()) {
-      return res
-        .status(HTTP_STATUS.BAD_REQUEST)
-        .json({ message: 'Show date cannot be in the past' });
-    }
-
-    if (ticketPrice < 0) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ message: 'Ticket price must be positive' });
-    }
-
-    if (availableTickets < 0) {
-      return res
-        .status(HTTP_STATUS.BAD_REQUEST)
-        .json({ message: 'Available price must be positive' });
-    }
 
     const showRepository = new ShowRepository();
 
@@ -72,8 +46,6 @@ export const createShow = async (req: ExtendedRequest, res: Response) => {
     });
   } catch (error) {
     logger.error('Error creating show', error);
-    return res
-      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ message: `Server error: ${error}` });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ message: `Server error` });
   }
 };
