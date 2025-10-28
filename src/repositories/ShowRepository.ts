@@ -18,4 +18,8 @@ export class ShowRepository {
   async findOne(options: FindOneOptions<ShowEntity>): Promise<ShowEntity | null> {
     return await this.repository.findOne(options);
   }
+
+  async update(id: string, data: Partial<ShowEntity>): Promise<void> {
+    await this.repository.update(id, data);
+  }
 }

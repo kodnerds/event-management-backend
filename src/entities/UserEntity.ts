@@ -4,11 +4,13 @@ import {
   Entity,
   JoinTable,
   ManyToMany,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn
 } from 'typeorm';
 
 import { ArtistEntity } from './ArtistEntity';
+import { RsvpEntity } from './RsvpEntity';
 
 export enum UserRole {
   USER = 'USER',
@@ -48,6 +50,9 @@ export class UserEntity {
 
   @Column({ nullable: true })
   location: string;
+
+  @OneToMany(() => RsvpEntity, (rsvp) => rsvp.user)
+  rsvps: RsvpEntity[];
 
   @CreateDateColumn()
   createdAt: Date;

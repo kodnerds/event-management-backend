@@ -9,7 +9,6 @@ export const createShow = async (req: Request, res: Response) => {
     const { title, description, location, date, ticketPrice, availableTickets } = req.body;
 
     const user = req.user!;
-
     const showDate = new Date(date);
 
     const showRepository = new ShowRepository();
