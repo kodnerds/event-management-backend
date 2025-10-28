@@ -1,4 +1,4 @@
-import { ArtistRepository, ShowRepository } from '../repositories';
+import { ShowRepository } from '../repositories';
 import { HTTP_STATUS } from '../utils/const';
 import logger from '../utils/logger';
 
@@ -39,15 +39,6 @@ export const createShow = async (req: ExtendedRequest, res: Response) => {
     }
 
     const showRepository = new ShowRepository();
-    const artistRepository = new ArtistRepository();
-
-    const artist = await artistRepository.findOne({ where: { id: user.id } });
-
-    if (!artist) {
-      return res
-        .status(HTTP_STATUS.NOT_FOUND)
-        .json({ message: 'Artist not found. Please register as an artist first.' });
-    }
 
     const existingShow = await showRepository.findOne({
       where: { title, artist: { id: user.id } },
