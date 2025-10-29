@@ -7,6 +7,9 @@ services:
       target: base
     env_file:
       - .env
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
     ports:
       - ${PORT}:${PORT}
     volumes:
