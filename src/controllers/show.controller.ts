@@ -2,9 +2,12 @@ import { Between, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 
 import { ArtistRepository, ShowRepository } from '../repositories';
 import { HTTP_STATUS } from '../utils/const';
+import { getPaginationParams } from '../utils/getPaginationParams';
 import logger from '../utils/logger';
 
+import type { ShowEntity } from '../entities/ShowEntity';
 import type { Request, Response } from 'express';
+import type { FindOptionsWhere } from 'typeorm';
 
 export const createShow = async (req: Request, res: Response) => {
   try {
@@ -103,21 +106,15 @@ export const getAllShows = async (req: Request, res: Response): Promise<void> =>
     const showRepo = new ShowRepository();
     const artistRepo = new ArtistRepository();
 
-    const { page = '1', limit = '10', artistId, from, to } = req.query;
+    const { page: pageNum, limit: limitNum } = getPaginationParams(req.query);
+    const { artistId, from, to } = req.query;
 
-    const pageNum = parseInt(page as string, 10);
-    const limitNum = parseInt(limit as string, 10);
-    if (isNaN(pageNum) || isNaN(limitNum) || pageNum < 1 || limitNum < 1) {
-      res.status(400).json({ message: 'Invalid pagination parameters' });
-      return;
-    }
-
-    const filters: any = {};
+    const filters: FindOptionsWhere<ShowEntity> = {};
 
     if (artistId) {
       const artistExists = await artistRepo.findById(artistId as string);
       if (!artistExists) {
-        res.status(400).json({ message: 'Artist not found' });
+        res.status(HTTP_STATUS.NOT_FOUND).json({ message: 'Artist not found' });
         return;
       }
       filters.artist = { id: artistId as string };
@@ -131,18 +128,9 @@ export const getAllShows = async (req: Request, res: Response): Promise<void> =>
       filters.date = LessThanOrEqual(new Date(to as string));
     }
 
-    const repository = (showRepo as any).repository;
-    const totalItems = await repository.count({ where: filters });
+    const [shows, totalItems] = await showRepo.findAndCount(filters, pageNum, limitNum);
 
-    const shows = await repository.find({
-      where: filters,
-      relations: ['artist'],
-      order: { date: 'ASC' },
-      skip: (pageNum - 1) * limitNum,
-      take: limitNum
-    });
-
-    const formatted = shows.map((show: any) => ({
+    const formatted = shows.map((show) => ({
       id: show.id,
       artistId: show.artist.id,
       title: show.title,
@@ -156,7 +144,7 @@ export const getAllShows = async (req: Request, res: Response): Promise<void> =>
       }
     }));
 
-    res.status(200).json({
+    res.json({
       message: 'Shows fetched successfully',
       data: {
         items: formatted,

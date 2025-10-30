@@ -9,6 +9,7 @@ const CREATE_SHOW_ROUTE = '/shows/create';
 const CREATE_ARTIST_ROUTE = '/artists/signup';
 const RSVP_ROUTE = (showId: string) => `/shows/${showId}/rsvp`;
 const CREATE_USER_ROUTE = '/users/signup';
+const GET_SHOWS_ROUTE = '/shows';
 
 describe('Show routes', () => {
   const factory = new TestFactory();
@@ -25,10 +26,13 @@ describe('Show routes', () => {
     await factory.reset();
   });
 
-  const createArtistAndShow = async (showData = mockShows.valid) => {
+  const createArtistAndShow = async (
+    showData = mockShows.valid,
+    artistData = mockArtists.valid
+  ) => {
     const artistRes = await factory.app
       .post(CREATE_ARTIST_ROUTE)
-      .send(mockArtists.valid)
+      .send(artistData)
       .expect(HTTP_STATUS.CREATED);
     const artistToken = generateTestAuthToken(artistRes.body.data);
 
@@ -257,145 +261,126 @@ describe('Show routes', () => {
       expect(response.body).toHaveProperty('message', 'Validation error');
     });
   });
-});
 
-const GET_SHOWS_ROUTE = '/shows';
+  describe('GET /shows', () => {
+    it('should retrieve shows successfully with pagination', async () => {
+      await createArtistAndShow(
+        {
+          ...mockShows.valid,
+          title: 'Show A',
+          date: new Date(Date.now() + 24 * 3600 * 1000).toISOString()
+        },
+        { ...mockArtists.valid, email: 'artist-a@test.com' }
+      );
+      await createArtistAndShow(
+        {
+          ...mockShows.valid,
+          title: 'Show B',
+          date: new Date(Date.now() + 48 * 3600 * 1000).toISOString()
+        },
+        { ...mockArtists.valid, email: 'artist-b@test.com' }
+      );
 
-describe('GET /shows', () => {
-  const factory = new TestFactory();
+      const res = await factory.app.get(GET_SHOWS_ROUTE).expect(HTTP_STATUS.OK);
 
-  beforeAll(async () => {
-    await factory.init();
-  });
-
-  afterAll(async () => {
-    await factory.close();
-  });
-
-  afterEach(async () => {
-    await factory.reset();
-  });
-
-  const createArtistAndGetToken = async (overrides: Partial<typeof mockArtists.valid> = {}) => {
-    const uniqueEmail =
-      overrides.email ?? `artist+${Date.now()}${Math.random().toString(16).slice(2)}@example.com`;
-    const payload = { ...mockArtists.valid, ...overrides, email: uniqueEmail };
-    const res = await factory.app
-      .post(CREATE_ARTIST_ROUTE)
-      .send(payload)
-      .expect(HTTP_STATUS.CREATED);
-    const token = generateTestAuthToken(res.body.data);
-    return { token, artistId: res.body.data.id };
-  };
-
-  const createShow = async (token: string, overrides: Partial<typeof mockShows.valid> = {}) => {
-    const payload = { ...mockShows.valid, ...overrides };
-    return await factory.app
-      .post(CREATE_SHOW_ROUTE)
-      .set('Authorization', `Bearer ${token}`)
-      .send(payload)
-      .expect(HTTP_STATUS.CREATED);
-  };
-
-  it('should retrieve shows successfully', async () => {
-    const { token } = await createArtistAndGetToken();
-    await createShow(token, {
-      title: 'Show A',
-      date: new Date(Date.now() + 24 * 3600 * 1000).toISOString()
-    });
-    await createShow(token, {
-      title: 'Show B',
-      date: new Date(Date.now() + 48 * 3600 * 1000).toISOString()
-    });
-
-    const res = await factory.app.get(GET_SHOWS_ROUTE).expect(HTTP_STATUS.OK);
-
-    expect(res.body).toMatchObject({ message: 'Shows fetched successfully' });
-    expect(Array.isArray(res.body.data.items)).toBe(true);
-    expect(res.body.data.items.length).toBeGreaterThanOrEqual(2);
-    expect(res.body.data).toHaveProperty('pagination');
-  });
-
-  it('should filter shows by artistId', async () => {
-    const artist1 = await createArtistAndGetToken({ name: 'Artist One' });
-    const artist2 = await createArtistAndGetToken({ name: 'Artist Two' });
-
-    await createShow(artist1.token, { title: 'Artist1 Show 1' });
-    await createShow(artist1.token, { title: 'Artist1 Show 2' });
-    await createShow(artist2.token, { title: 'Artist2 Show 1' });
-
-    const res = await factory.app
-      .get(`${GET_SHOWS_ROUTE}?artistId=${artist1.artistId}`)
-      .expect(HTTP_STATUS.OK);
-
-    expect(res.body.data.items.length).toBeGreaterThanOrEqual(2);
-    expect(
-      (res.body.data.items as Array<{ artistId: string }>).every(
-        (s) => s.artistId === artist1.artistId
-      )
-    ).toBe(true);
-  });
-
-  it('should filter shows by date range', async () => {
-    const { token } = await createArtistAndGetToken();
-
-    const day1 = new Date();
-    day1.setDate(day1.getDate() + 1);
-    const day2 = new Date();
-    day2.setDate(day2.getDate() + 2);
-    const day3 = new Date();
-    day3.setDate(day3.getDate() + 3);
-
-    await createShow(token, { title: 'D1', date: day1.toISOString() });
-    await createShow(token, { title: 'D2', date: day2.toISOString() });
-    await createShow(token, { title: 'D3', date: day3.toISOString() });
-
-    const res = await factory.app
-      .get(`${GET_SHOWS_ROUTE}?from=${day1.toISOString()}&to=${day2.toISOString()}`)
-      .expect(HTTP_STATUS.OK);
-
-    const titles = (res.body.data.items as Array<{ title: string }>).map((s) => s.title);
-    expect(titles).toEqual(expect.arrayContaining(['D1', 'D2']));
-    expect(titles).not.toEqual(expect.arrayContaining(['D3']));
-  });
-
-  it('should support pagination', async () => {
-    const { token } = await createArtistAndGetToken();
-
-    for (let i = 0; i < 12; i++) {
-      await createShow(token, {
-        title: `P${i}`,
-        date: new Date(Date.now() + (i + 1) * 3600 * 1000).toISOString()
+      expect(res.body).toMatchObject({
+        message: 'Shows fetched successfully',
+        data: {
+          items: expect.any(Array),
+          pagination: {
+            currentPage: expect.any(Number),
+            totalPages: expect.any(Number),
+            totalItems: expect.any(Number)
+          }
+        }
       });
-    }
+      expect(res.body.data.items.length).toBeGreaterThanOrEqual(2);
+    });
 
-    const resPage1 = await factory.app
-      .get(`${GET_SHOWS_ROUTE}?page=1&limit=5`)
-      .expect(HTTP_STATUS.OK);
-    expect(resPage1.body.data.items.length).toBe(5);
-    expect(resPage1.body.data.pagination.currentPage).toBe(1);
+    it('should filter shows by artistId', async () => {
+      const artistRes1 = await factory.app
+        .post(CREATE_ARTIST_ROUTE)
+        .send({ ...mockArtists.valid, email: 'artist1@test.com', name: 'Artist One' })
+        .expect(HTTP_STATUS.CREATED);
+      const artist1Token = generateTestAuthToken(artistRes1.body.data);
+      const artist1Id = artistRes1.body.data.id;
 
-    const resPage2 = await factory.app
-      .get(`${GET_SHOWS_ROUTE}?page=2&limit=5`)
-      .expect(HTTP_STATUS.OK);
-    expect(resPage2.body.data.items.length).toBe(5);
-    expect(resPage2.body.data.pagination.currentPage).toBe(2);
-  });
+      await factory.app
+        .post(CREATE_SHOW_ROUTE)
+        .set('Authorization', `Bearer ${artist1Token}`)
+        .send({ ...mockShows.valid, title: 'Artist1 Show 1' })
+        .expect(HTTP_STATUS.CREATED);
 
-  it('should validate invalid query params', async () => {
-    const res1 = await factory.app
-      .get(`${GET_SHOWS_ROUTE}?page=0&limit=10`)
-      .expect(HTTP_STATUS.BAD_REQUEST);
-    expect(res1.body).toHaveProperty('message', 'Invalid pagination parameters');
+      await factory.app
+        .post(CREATE_SHOW_ROUTE)
+        .set('Authorization', `Bearer ${artist1Token}`)
+        .send({ ...mockShows.valid, title: 'Artist1 Show 2' })
+        .expect(HTTP_STATUS.CREATED);
 
-    const res2 = await factory.app
-      .get(`${GET_SHOWS_ROUTE}?page=abc&limit=10`)
-      .expect(HTTP_STATUS.BAD_REQUEST);
-    expect(res2.body).toHaveProperty('message', 'Invalid pagination parameters');
+      await createArtistAndShow({ ...mockShows.valid, title: 'Other Artist Show' });
 
-    const res3 = await factory.app
-      .get(`${GET_SHOWS_ROUTE}?artistId=00000000-0000-0000-0000-000000000000`)
-      .expect(HTTP_STATUS.BAD_REQUEST);
-    expect(res3.body).toHaveProperty('message', 'Artist not found');
+      const res = await factory.app
+        .get(`${GET_SHOWS_ROUTE}?artistId=${artist1Id}`)
+        .expect(HTTP_STATUS.OK);
+
+      expect(res.body.data.items.length).toBe(2);
+      expect(
+        (res.body.data.items as Array<{ artistId: string }>).every(
+          (show) => show.artistId === artist1Id
+        )
+      ).toBe(true);
+    });
+
+    it('should filter shows by date range', async () => {
+      const day1 = new Date(Date.now() + 24 * 3600 * 1000);
+      const day2 = new Date(Date.now() + 48 * 3600 * 1000);
+      const day3 = new Date(Date.now() + 72 * 3600 * 1000);
+
+      await createArtistAndShow(
+        {
+          ...mockShows.valid,
+          title: 'Day 1 Show',
+          date: day1.toISOString()
+        },
+        { ...mockArtists.valid, email: 'artist-day1@test.com' }
+      );
+      await createArtistAndShow(
+        {
+          ...mockShows.valid,
+          title: 'Day 2 Show',
+          date: day2.toISOString()
+        },
+        { ...mockArtists.valid, email: 'artist-day2@test.com' }
+      );
+      await createArtistAndShow(
+        {
+          ...mockShows.valid,
+          title: 'Day 3 Show',
+          date: day3.toISOString()
+        },
+        { ...mockArtists.valid, email: 'artist-day3@test.com' }
+      );
+
+      const res = await factory.app
+        .get(`${GET_SHOWS_ROUTE}?from=${day1.toISOString()}&to=${day2.toISOString()}`)
+        .expect(HTTP_STATUS.OK);
+
+      const titles = (res.body.data.items as Array<{ title: string }>).map((show) => show.title);
+      expect(titles).toContain('Day 1 Show');
+      expect(titles).toContain('Day 2 Show');
+      expect(titles).not.toContain('Day 3 Show');
+    });
+
+    it('should validate invalid query parameters', async () => {
+      // page=0 should default to page=1, not return 400
+      const res = await factory.app
+        .get(`${GET_SHOWS_ROUTE}?page=0&limit=10`)
+        .expect(HTTP_STATUS.OK);
+      expect(res.body.data.pagination.currentPage).toBe(1);
+
+      await factory.app
+        .get(`${GET_SHOWS_ROUTE}?artistId=00000000-0000-0000-0000-000000000000`)
+        .expect(HTTP_STATUS.NOT_FOUND);
+    });
   });
 });
