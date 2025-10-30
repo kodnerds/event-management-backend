@@ -9,7 +9,7 @@ import type { Request, Response } from 'express';
 
 const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET!;
 
-export const paystackWebook = async(req:Request,res:Response) =>{
+export const paystackWebook = async(req:Request,res:Response) => {
     try {
         const paymentRepository = new PaymentRepository()
 
