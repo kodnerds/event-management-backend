@@ -1,6 +1,6 @@
 import { Router } from 'express';
 
-import { createRsvp, createShow, getSingleShowById } from '../controllers';
+import { createRsvp, createShow, getAllShows, getSingleShowById } from '../controllers';
 import {
   authenticate,
   authorize,
@@ -11,6 +11,7 @@ import {
 
 const router = Router();
 
+router.get('/', getAllShows);
 router.post(
   '/create',
   authenticate,

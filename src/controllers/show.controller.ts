@@ -1,8 +1,13 @@
-import { ShowRepository } from '../repositories';
+import { Between, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+
+import { ArtistRepository, ShowRepository } from '../repositories';
 import { HTTP_STATUS } from '../utils/const';
+import { getPaginationParams } from '../utils/getPaginationParams';
 import logger from '../utils/logger';
 
+import type { ShowEntity } from '../entities/ShowEntity';
 import type { Request, Response } from 'express';
+import type { FindOptionsWhere } from 'typeorm';
 
 export const createShow = async (req: Request, res: Response) => {
   try {
@@ -93,5 +98,65 @@ export const getSingleShowById = async (req: Request, res: Response) => {
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       message: 'Internal server error'
     });
+  }
+};
+
+export const getAllShows = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const showRepo = new ShowRepository();
+    const artistRepo = new ArtistRepository();
+
+    const { page: pageNum, limit: limitNum } = getPaginationParams(req.query);
+    const { artistId, from, to } = req.query;
+
+    const filters: FindOptionsWhere<ShowEntity> = {};
+
+    if (artistId) {
+      const artistExists = await artistRepo.findById(artistId as string);
+      if (!artistExists) {
+        res.status(HTTP_STATUS.NOT_FOUND).json({ message: 'Artist not found' });
+        return;
+      }
+      filters.artist = { id: artistId as string };
+    }
+
+    if (from && to) {
+      filters.date = Between(new Date(from as string), new Date(to as string));
+    } else if (from) {
+      filters.date = MoreThanOrEqual(new Date(from as string));
+    } else if (to) {
+      filters.date = LessThanOrEqual(new Date(to as string));
+    }
+
+    const [shows, totalItems] = await showRepo.findAndCount(filters, pageNum, limitNum);
+
+    const formatted = shows.map((show) => ({
+      id: show.id,
+      artistId: show.artist.id,
+      title: show.title,
+      location: show.location,
+      date: show.date,
+      ticketPrice: show.ticketPrice,
+      availableTickets: show.availableTickets,
+      artist: {
+        name: show.artist.name,
+        genre: show.artist.genre
+      }
+    }));
+
+    res.json({
+      message: 'Shows fetched successfully',
+      data: {
+        items: formatted,
+        pagination: {
+          currentPage: pageNum,
+          totalPages: Math.ceil(totalItems / limitNum),
+          totalItems
+        }
+      }
+    });
+  } catch (error) {
+    logger.error('Error fetching shows:', error);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ message: 'Server error' });
   }
 };

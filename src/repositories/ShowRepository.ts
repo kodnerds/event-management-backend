@@ -1,7 +1,7 @@
 import { handleGetRepository } from '../database';
 import { ShowEntity } from '../entities/ShowEntity';
 
-import type { FindOneOptions, Repository } from 'typeorm';
+import type { FindOneOptions, FindOptionsWhere, Repository } from 'typeorm';
 
 export class ShowRepository {
   private repository: Repository<ShowEntity>;
@@ -21,5 +21,19 @@ export class ShowRepository {
 
   async update(id: string, data: Partial<ShowEntity>): Promise<void> {
     await this.repository.update(id, data);
+  }
+
+  async findAndCount(
+    filters: FindOptionsWhere<ShowEntity>,
+    page: number,
+    limit: number
+  ): Promise<[ShowEntity[], number]> {
+    return await this.repository.findAndCount({
+      where: filters,
+      relations: ['artist'],
+      order: { date: 'ASC' },
+      skip: (page - 1) * limit,
+      take: limit
+    });
   }
 }

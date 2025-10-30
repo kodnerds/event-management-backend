@@ -9,6 +9,7 @@ const CREATE_SHOW_ROUTE = '/shows/create';
 const CREATE_ARTIST_ROUTE = '/artists/signup';
 const RSVP_ROUTE = (showId: string) => `/shows/${showId}/rsvp`;
 const CREATE_USER_ROUTE = '/users/signup';
+const GET_SHOWS_ROUTE = '/shows';
 
 describe('Show routes', () => {
   const factory = new TestFactory();
@@ -25,10 +26,13 @@ describe('Show routes', () => {
     await factory.reset();
   });
 
-  const createArtistAndShow = async (showData = mockShows.valid) => {
+  const createArtistAndShow = async (
+    showData = mockShows.valid,
+    artistData = mockArtists.valid
+  ) => {
     const artistRes = await factory.app
       .post(CREATE_ARTIST_ROUTE)
-      .send(mockArtists.valid)
+      .send(artistData)
       .expect(HTTP_STATUS.CREATED);
     const artistToken = generateTestAuthToken(artistRes.body.data);
 
@@ -255,6 +259,128 @@ describe('Show routes', () => {
       const response = await factory.app.get('/shows/invalid-id').expect(HTTP_STATUS.BAD_REQUEST);
 
       expect(response.body).toHaveProperty('message', 'Validation error');
+    });
+  });
+
+  describe('GET /shows', () => {
+    it('should retrieve shows successfully with pagination', async () => {
+      await createArtistAndShow(
+        {
+          ...mockShows.valid,
+          title: 'Show A',
+          date: new Date(Date.now() + 24 * 3600 * 1000).toISOString()
+        },
+        { ...mockArtists.valid, email: 'artist-a@test.com' }
+      );
+      await createArtistAndShow(
+        {
+          ...mockShows.valid,
+          title: 'Show B',
+          date: new Date(Date.now() + 48 * 3600 * 1000).toISOString()
+        },
+        { ...mockArtists.valid, email: 'artist-b@test.com' }
+      );
+
+      const res = await factory.app.get(GET_SHOWS_ROUTE).expect(HTTP_STATUS.OK);
+
+      expect(res.body).toMatchObject({
+        message: 'Shows fetched successfully',
+        data: {
+          items: expect.any(Array),
+          pagination: {
+            currentPage: expect.any(Number),
+            totalPages: expect.any(Number),
+            totalItems: expect.any(Number)
+          }
+        }
+      });
+      expect(res.body.data.items.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('should filter shows by artistId', async () => {
+      const artistRes1 = await factory.app
+        .post(CREATE_ARTIST_ROUTE)
+        .send({ ...mockArtists.valid, email: 'artist1@test.com', name: 'Artist One' })
+        .expect(HTTP_STATUS.CREATED);
+      const artist1Token = generateTestAuthToken(artistRes1.body.data);
+      const artist1Id = artistRes1.body.data.id;
+
+      await factory.app
+        .post(CREATE_SHOW_ROUTE)
+        .set('Authorization', `Bearer ${artist1Token}`)
+        .send({ ...mockShows.valid, title: 'Artist1 Show 1' })
+        .expect(HTTP_STATUS.CREATED);
+
+      await factory.app
+        .post(CREATE_SHOW_ROUTE)
+        .set('Authorization', `Bearer ${artist1Token}`)
+        .send({ ...mockShows.valid, title: 'Artist1 Show 2' })
+        .expect(HTTP_STATUS.CREATED);
+
+      await createArtistAndShow({ ...mockShows.valid, title: 'Other Artist Show' });
+
+      const res = await factory.app
+        .get(`${GET_SHOWS_ROUTE}?artistId=${artist1Id}`)
+        .expect(HTTP_STATUS.OK);
+
+      expect(res.body.data.items.length).toBe(2);
+      expect(
+        (res.body.data.items as Array<{ artistId: string }>).every(
+          (show) => show.artistId === artist1Id
+        )
+      ).toBe(true);
+    });
+
+    it('should filter shows by date range', async () => {
+      const day1 = new Date(Date.now() + 24 * 3600 * 1000);
+      const day2 = new Date(Date.now() + 48 * 3600 * 1000);
+      const day3 = new Date(Date.now() + 72 * 3600 * 1000);
+
+      await createArtistAndShow(
+        {
+          ...mockShows.valid,
+          title: 'Day 1 Show',
+          date: day1.toISOString()
+        },
+        { ...mockArtists.valid, email: 'artist-day1@test.com' }
+      );
+      await createArtistAndShow(
+        {
+          ...mockShows.valid,
+          title: 'Day 2 Show',
+          date: day2.toISOString()
+        },
+        { ...mockArtists.valid, email: 'artist-day2@test.com' }
+      );
+      await createArtistAndShow(
+        {
+          ...mockShows.valid,
+          title: 'Day 3 Show',
+          date: day3.toISOString()
+        },
+        { ...mockArtists.valid, email: 'artist-day3@test.com' }
+      );
+
+      const res = await factory.app
+        .get(`${GET_SHOWS_ROUTE}?from=${day1.toISOString()}&to=${day2.toISOString()}`)
+        .expect(HTTP_STATUS.OK);
+
+      const titles = (res.body.data.items as Array<{ title: string }>).map((show) => show.title);
+      expect(titles).toContain('Day 1 Show');
+      expect(titles).toContain('Day 2 Show');
+      expect(titles).not.toContain('Day 3 Show');
+    });
+
+    it('should validate invalid query parameters', async () => {
+      // page=0 should default to page=1, not return 400
+      const res = await factory.app
+        .get(`${GET_SHOWS_ROUTE}?page=0&limit=10`)
+        .expect(HTTP_STATUS.OK);
+      expect(res.body.data.pagination.currentPage).toBe(1);
+
+      await factory.app
+        .get(`${GET_SHOWS_ROUTE}?artistId=00000000-0000-0000-0000-000000000000`)
+        .expect(HTTP_STATUS.NOT_FOUND);
     });
   });
 });
