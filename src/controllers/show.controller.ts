@@ -60,12 +60,10 @@ export const getSingleShowById = async (req: Request, res: Response) => {
     });
 
     if (!show) {
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         message: 'Show not found'
       });
     }
-
-    const rsvpCount = show.rsvps ? show.rsvps.length : 0;
 
     const responseData = {
       id: show.id,
@@ -75,26 +73,24 @@ export const getSingleShowById = async (req: Request, res: Response) => {
       date: show.date,
       ticketPrice: show.ticketPrice,
       availableTickets: show.availableTickets,
-      artist: show.artist
-        ? {
-            id: show.artist.id,
-            name: show.artist.name,
-            genre: show.artist.genre,
-            bio: show.artist.bio
-          }
-        : null,
-      rsvpCount,
+      artist: {
+        id: show.artist.id,
+        name: show.artist.name,
+        genre: show.artist.genre,
+        bio: show.artist.bio
+      },
+      rsvpCount: show.rsvps.length,
       createdAt: show.createdAt,
       updatedAt: show.updatedAt
     };
 
-    return res.status(200).json({
+    return res.json({
       message: 'Show details fetched successfully',
       data: responseData
     });
   } catch (error) {
     logger.error(error);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       message: 'Internal server error'
     });
   }

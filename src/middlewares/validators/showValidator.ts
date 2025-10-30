@@ -1,4 +1,4 @@
-import { body } from 'express-validator';
+import { body, param } from 'express-validator';
 
 export const showValidation = [
   body('title')
@@ -50,3 +50,5 @@ export const showValidation = [
     .isInt({ min: 0 })
     .withMessage('Available price must be a positive number')
 ];
+
+export const getShowByIdValidation = [param('id').isUUID('4').withMessage('Invalid ID')];
