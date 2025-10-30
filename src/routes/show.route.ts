@@ -1,11 +1,12 @@
 import { Router } from 'express';
 
-import { createRsvp, createShow } from '../controllers';
+import { createRsvp, createShow, getAllShows } from '../controllers';
 import { authenticate, authorize, showValidation, validate } from '../middlewares';
 
 const router = Router();
 
 router.post('/create', authenticate, authorize(['ARTIST']), showValidation, validate, createShow);
+router.get('/', getAllShows);
 router.post('/:showId/rsvp', authenticate, createRsvp);
 
 export default router;
