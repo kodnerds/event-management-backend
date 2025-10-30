@@ -48,3 +48,50 @@ export const createShow = async (req: Request, res: Response) => {
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ message: `Server error` });
   }
 };
+
+export const getSingleShowById = async (req: Request, res: Response) => {
+  try {
+    const showId = req.params.id;
+    const showRepository = new ShowRepository();
+
+    const show = await showRepository.findOne({
+      where: { id: showId },
+      relations: ['artist', 'rsvps']
+    });
+
+    if (!show) {
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
+        message: 'Show not found'
+      });
+    }
+
+    const responseData = {
+      id: show.id,
+      title: show.title,
+      description: show.description,
+      location: show.location,
+      date: show.date,
+      ticketPrice: show.ticketPrice,
+      availableTickets: show.availableTickets,
+      artist: {
+        id: show.artist.id,
+        name: show.artist.name,
+        genre: show.artist.genre,
+        bio: show.artist.bio
+      },
+      rsvpCount: show.rsvps.length,
+      createdAt: show.createdAt,
+      updatedAt: show.updatedAt
+    };
+
+    return res.json({
+      message: 'Show details fetched successfully',
+      data: responseData
+    });
+  } catch (error) {
+    logger.error(error);
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      message: 'Internal server error'
+    });
+  }
+};
