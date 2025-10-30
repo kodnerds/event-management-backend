@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 
 import { ArtistEntity } from './ArtistEntity';
+import { PaymentEntity } from './PaymentEntity';
 import { RsvpEntity } from './RsvpEntity';
 
 export enum UserRole {
@@ -53,6 +54,9 @@ export class UserEntity {
 
   @OneToMany(() => RsvpEntity, (rsvp) => rsvp.user)
   rsvps: RsvpEntity[];
+
+  @OneToMany(() => PaymentEntity, (payment) => payment.user)
+  payments: PaymentEntity[];
 
   @CreateDateColumn()
   createdAt: Date;

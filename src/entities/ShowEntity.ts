@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 
 import { ArtistEntity } from './ArtistEntity';
+import { PaymentEntity } from './PaymentEntity';
 import { RsvpEntity } from './RsvpEntity';
 
 @Entity('shows')
@@ -44,6 +45,9 @@ export class ShowEntity {
 
   @OneToMany(() => RsvpEntity, (rsvp) => rsvp.show)
   rsvps: RsvpEntity[];
+
+  @OneToMany(() => PaymentEntity, (payment) => payment.shows)
+  payments: PaymentEntity[];
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;

@@ -4,11 +4,13 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToOne,
   PrimaryGeneratedColumn,
   Unique,
   UpdateDateColumn
 } from 'typeorm';
 
+import { PaymentEntity, PaymentStatus } from './PaymentEntity';
 import { ShowEntity } from './ShowEntity';
 import { UserEntity } from './UserEntity';
 
@@ -38,6 +40,16 @@ export class RsvpEntity {
     default: 'REGISTERED'
   })
   status: 'REGISTERED' | 'CANCELLED';
+
+  @Column({ type: 'enum', enum: PaymentStatus, default: PaymentStatus.PENDING })
+  paymentStatus: PaymentStatus;
+
+  @Column()
+  paymentId:string
+
+  @OneToOne(() => PaymentEntity, (payment) => payment.rsvp, { nullable: true })
+  @JoinColumn({name:'paymentId'})
+  payment: PaymentEntity | null;
 
   @CreateDateColumn()
   createdAt: Date;
