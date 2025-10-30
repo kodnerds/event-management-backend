@@ -14,6 +14,12 @@ import { PaymentEntity, PaymentStatus } from './PaymentEntity';
 import { ShowEntity } from './ShowEntity';
 import { UserEntity } from './UserEntity';
 
+export enum RsvpStatus {
+  REGISTERED = 'REGISTERED',
+  CANCELLED = 'CANCELLED',
+  PENDING = 'PENDING'
+}
+
 @Entity('rsvps')
 @Unique(['user', 'show'])
 export class RsvpEntity {
@@ -36,19 +42,19 @@ export class RsvpEntity {
 
   @Column({
     type: 'enum',
-    enum: ['REGISTERED', 'CANCELLED'],
-    default: 'REGISTERED'
+    enum: RsvpStatus,
+    default: RsvpStatus.PENDING
   })
-  status: 'REGISTERED' | 'CANCELLED';
+  status: RsvpStatus;
 
   @Column({ type: 'enum', enum: PaymentStatus, default: PaymentStatus.PENDING })
   paymentStatus: PaymentStatus;
 
   @Column()
-  paymentId:string
+  paymentId: string;
 
   @OneToOne(() => PaymentEntity, (payment) => payment.rsvp, { nullable: true })
-  @JoinColumn({name:'paymentId'})
+  @JoinColumn({ name: 'paymentId' })
   payment: PaymentEntity | null;
 
   @CreateDateColumn()

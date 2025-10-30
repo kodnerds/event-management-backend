@@ -1,3 +1,4 @@
+import { RsvpStatus } from '../entities';
 import { RsvpRepository, ShowRepository } from '../repositories';
 import { HTTP_STATUS } from '../utils/const';
 import logger from '../utils/logger';
@@ -53,7 +54,7 @@ export const createRsvp = async (req: Request, res: Response) => {
     const newRsvp = await rsvpRepository.create({
       userId: user.id,
       showId,
-      status: 'REGISTERED'
+      status: RsvpStatus.REGISTERED
     });
 
     return res.status(HTTP_STATUS.CREATED).json({
