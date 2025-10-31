@@ -1,6 +1,6 @@
 import { Router } from 'express';
 
-import { createRsvp, createShow, getAllShows, getSingleShowById } from '../controllers';
+import { createRsvp, createShow, cancelRsvp, getAllShows, getSingleShowById } from '../controllers';
 import {
   authenticate,
   authorize,
@@ -22,5 +22,6 @@ router.post(
 );
 router.post('/:showId/rsvp', authenticate, authorize(['USER']), createRsvp);
 router.get('/:id', getShowByIdValidation, validate, getSingleShowById);
+router.put('/:showId/rsvp', authenticate, authorize(['USER']), cancelRsvp);
 
 export default router;

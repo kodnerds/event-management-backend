@@ -1,7 +1,7 @@
 import { handleGetRepository } from '../database';
 import { RsvpEntity } from '../entities';
 
-import type { FindOneOptions, Repository } from 'typeorm';
+import type { FindOneOptions, Repository, UpdateResult } from 'typeorm';
 
 export class RsvpRepository {
   private repository: Repository<RsvpEntity>;
@@ -17,5 +17,8 @@ export class RsvpRepository {
 
   async findOne(options: FindOneOptions<RsvpEntity>): Promise<RsvpEntity | null> {
     return await this.repository.findOne(options);
+  }
+  async update(id: string, data: Partial<RsvpEntity>): Promise<UpdateResult> {
+    return await this.repository.update(id, data);
   }
 }
