@@ -1,6 +1,12 @@
 import { Router } from 'express';
 
-import { createRsvp, createShow, getAllShows, getSingleShowById } from '../controllers';
+import {
+  createRsvp,
+  createShow,
+  getAllShows,
+  getRsvpForShow,
+  getSingleShowById
+} from '../controllers';
 import {
   authenticate,
   authorize,
@@ -22,5 +28,13 @@ router.post(
 );
 router.post('/:showId/rsvp', authenticate, authorize(['USER']), createRsvp);
 router.get('/:id', getShowByIdValidation, validate, getSingleShowById);
+router.get(
+  '/:id/rsvps',
+  authenticate,
+  authorize(['ARTIST', 'ADMIN']),
+  getShowByIdValidation,
+  validate,
+  getRsvpForShow
+);
 
 export default router;
