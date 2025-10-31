@@ -8,6 +8,7 @@ import type { AuthenticatedUser } from '../../src/types';
 const CREATE_SHOW_ROUTE = '/shows/create';
 const CREATE_ARTIST_ROUTE = '/artists/signup';
 const RSVP_ROUTE = (showId: string) => `/shows/${showId}/rsvp`;
+const GET_RSVP = (id: string) => `/shows/${id}/rsvps`;
 const CREATE_USER_ROUTE = '/users/signup';
 const GET_SHOWS_ROUTE = '/shows';
 
@@ -381,6 +382,75 @@ describe('Show routes', () => {
       await factory.app
         .get(`${GET_SHOWS_ROUTE}?artistId=00000000-0000-0000-0000-000000000000`)
         .expect(HTTP_STATUS.NOT_FOUND);
+    });
+  });
+
+  describe('GET /shows/:id/rsvps', () => {
+    it('should allow the artist to successfully retrieve RSVPs for their show', async () => {
+      const { showId, artistToken } = await createArtistAndShow();
+
+      //Create 2 users and RSVP
+      const { userToken: user1Token } = await createUser();
+      const { userToken: user2Token } = await createUser(mockUsers.anotherUser);
+
+      await factory.app
+        .post(RSVP_ROUTE(showId))
+        .set('Authorization', `Bearer ${user1Token}`)
+        .expect(HTTP_STATUS.CREATED);
+      await factory.app
+        .post(RSVP_ROUTE(showId))
+        .set('Authorization', `Bearer ${user2Token}`)
+        .expect(HTTP_STATUS.CREATED);
+
+      const fetchResponse = await factory.app
+        .get(GET_RSVP(showId))
+        .set('Authorization', `Bearer ${artistToken}`)
+        .expect(HTTP_STATUS.OK);
+
+      expect(fetchResponse.body).toMatchObject({
+        message: 'RSVPs fetched successfully',
+        data: {
+          page: 1,
+          totalPages: 1,
+          totalCount: 2,
+          records: expect.any(Array)
+        }
+      });
+
+      expect(fetchResponse.body.data.records.length).toBe(2);
+      expect(fetchResponse.body.data.records[0]).toHaveProperty('user.email');
+      expect(fetchResponse.body.data.records[0]).toHaveProperty('status', 'REGISTERED');
+    });
+
+    it('should deny access to a regular user who is not the artist', async () => {
+      //Create artist and show
+      const { showId } = await createArtistAndShow();
+
+      //Create a normal user
+      const { userToken } = await createUser();
+
+      //User fetching RSVPs should be denied
+      const userResponse = await factory.app
+        .get(GET_RSVP(showId))
+        .set('Authorization', `Bearer ${userToken}`)
+        .expect(HTTP_STATUS.FORBIDDEN);
+
+      expect(userResponse.body).toEqual({
+        message: 'Forbidden: You do not have permission to access this resource.'
+      });
+    });
+
+    it('should return 404 when no RSVPs exist for a show', async () => {
+      const { showId, artistToken } = await createArtistAndShow();
+
+      const existResponse = await factory.app
+        .get(GET_RSVP(showId))
+        .set('Authorization', `Bearer ${artistToken}`)
+        .expect(HTTP_STATUS.NOT_FOUND);
+
+      expect(existResponse.body).toEqual({
+        message: 'No RSVPs found for this show'
+      });
     });
   });
 });
