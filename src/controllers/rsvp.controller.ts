@@ -1,4 +1,4 @@
-import { RsvpRepository, ShowRepository } from '../repositories';
+import { ArtistRepository, RsvpRepository, ShowRepository } from '../repositories';
 import { HTTP_STATUS } from '../utils/const';
 import { getPaginationParams } from '../utils/getPaginationParams';
 import logger from '../utils/logger';
@@ -126,3 +126,50 @@ export const getRsvpForShow = async (req: Request, res: Response) => {
     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ message: 'Server error' });
   }
 };
+
+export const cancelRsvp = async (req: Request, res: Response) => {
+  try {
+    const { showId } = req.params;
+    const user = req.user!;
+
+    const showRepository = new ShowRepository();
+    const rsvpRepository = new RsvpRepository();
+
+    const existingRsvp = await rsvpRepository.findOne({
+      where: { userId: user.id, showId },
+    });
+
+    if (!existingRsvp || existingRsvp.status === 'CANCELLED') {
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
+        message: 'RSVP not found or already cancelled',
+      });
+    }
+
+    await rsvpRepository.update(showId, { status: 'CANCELLED' });
+
+    const show = await showRepository.findOne({
+      where: { id: showId },
+      relations: ['artist'],
+     });
+    if (show && typeof show.availableTickets === 'number') {
+      await showRepository.update(showId, {
+        availableTickets: show.availableTickets + 1,
+      });
+    }
+
+    return res.status(HTTP_STATUS.OK).json({
+      message: 'RSVP cancelled successfully',
+      data: {
+        showId,
+        availableTickets: show?.availableTickets ?? 0,
+        status: existingRsvp.status,
+      },
+    });
+  } catch (error) {
+    logger.error('Error cancelling RSVP', error);
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      message: 'Server error',
+    });
+  }
+};
+

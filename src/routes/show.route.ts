@@ -4,6 +4,7 @@ import {
   createRsvp,
   createShow,
   deleteShow,
+  cancelRsvp,
   getAllShows,
   getRsvpForShow,
   getSingleShowById
@@ -45,5 +46,6 @@ router.delete(
   validate,
   deleteShow
 );
+router.put('/:showId/rsvp', authenticate, authorize(['USER']), cancelRsvp);
 
 export default router;
