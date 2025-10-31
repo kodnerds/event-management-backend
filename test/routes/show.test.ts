@@ -230,3 +230,114 @@ describe('GET /shows', () => {
     expect(res3.body).toHaveProperty('message', 'Artist not found');
   });
 });
+
+describe('DELETE /shows/:id', () => {
+  const factory = new TestFactory();
+
+  const CREATE_ARTIST_ROUTE = '/artists/signup';
+  const CREATE_SHOW_ROUTE = '/shows/create';
+
+  beforeAll(async () => {
+    await factory.init();
+  });
+
+  afterAll(async () => {
+    await factory.close();
+  });
+
+  afterEach(async () => {
+    await factory.reset();
+  });
+
+  const createArtistAndToken = async (overrides: Partial<typeof mockArtists.valid> = {}) => {
+    const uniqueEmail =
+      overrides.email ?? `artist+${Date.now()}${Math.random().toString(16).slice(2)}@example.com`;
+    const payload = { ...mockArtists.valid, ...overrides, email: uniqueEmail };
+    const res = await factory.app
+      .post(CREATE_ARTIST_ROUTE)
+      .send(payload)
+      .expect(HTTP_STATUS.CREATED);
+    const token = generateTestAuthToken(res.body.data);
+    const artistId = res.body.data.id as string;
+    return { token, artistId };
+  };
+
+  const createShowAndReturnId = async (
+    token: string,
+    overrides: Partial<typeof mockShows.valid> = {}
+  ): Promise<string> => {
+    const payload = { ...mockShows.valid, ...overrides };
+    const res = await factory.app
+      .post(CREATE_SHOW_ROUTE)
+      .set('Authorization', `Bearer ${token}`)
+      .send(payload)
+      .expect(HTTP_STATUS.CREATED);
+    return res.body.data.id as string;
+  };
+
+  it('should delete a show with no RSVPs (200)', async () => {
+    const { token } = await createArtistAndToken();
+    const showId = await createShowAndReturnId(token, {
+      title: `Del-NoRSVP-${Date.now()}`,
+      date: new Date(Date.now() + 24 * 3600 * 1000).toISOString()
+    });
+
+    const res = await factory.app
+      .delete(`/shows/${showId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(HTTP_STATUS.OK);
+
+    expect(res.body).toEqual({ message: 'Show deleted successfully' });
+  });
+
+  it('should cancel a show with RSVPs (200, isCancelled=true)', async () => {
+    const { token } = await createArtistAndToken();
+    const showId = await createShowAndReturnId(token, {
+      title: `Cancel-WithRSVP-${Date.now()}`,
+      date: new Date(Date.now() + 24 * 3600 * 1000).toISOString()
+    });
+
+    await factory.app
+      .post(`/shows/${showId}/rsvp`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(HTTP_STATUS.CREATED);
+
+    const res = await factory.app
+      .delete(`/shows/${showId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(HTTP_STATUS.OK);
+
+    expect(res.body).toMatchObject({
+      message: 'Show cancelled successfully',
+      data: { id: showId, isCancelled: true }
+    });
+  });
+
+  it('should forbid deletion by non-owner (403)', async () => {
+    const owner = await createArtistAndToken({ name: 'Owner' });
+    const attacker = await createArtistAndToken({ name: 'Attacker' });
+    const showId = await createShowAndReturnId(owner.token, {
+      title: `Owned-${Date.now()}`,
+      date: new Date(Date.now() + 24 * 3600 * 1000).toISOString()
+    });
+
+    const res = await factory.app
+      .delete(`/shows/${showId}`)
+      .set('Authorization', `Bearer ${attacker.token}`)
+      .expect(HTTP_STATUS.FORBIDDEN);
+
+    expect(res.body).toHaveProperty('message', 'Forbidden');
+  });
+
+  it('should return 404 for non-existent show', async () => {
+    const { token } = await createArtistAndToken();
+    const nonExistentId = '11111111-1111-4111-8111-111111111111';
+
+    const res = await factory.app
+      .delete(`/shows/${nonExistentId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(HTTP_STATUS.NOT_FOUND);
+
+    expect(res.body).toHaveProperty('message', 'Show not found');
+  });
+});

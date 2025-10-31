@@ -42,6 +42,9 @@ export class ShowEntity {
   @Column({ type: 'int', nullable: true })
   availableTickets?: number;
 
+  @Column({ type: 'boolean', default: false })
+  isCancelled: boolean;
+
   @OneToMany(() => RsvpEntity, (rsvp) => rsvp.show)
   rsvps: RsvpEntity[];
 
