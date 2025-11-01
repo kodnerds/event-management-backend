@@ -9,6 +9,20 @@ import type { ShowEntity } from '../entities/ShowEntity';
 import type { Request, Response } from 'express';
 import type { FindOptionsWhere } from 'typeorm';
 
+interface FormattedShow {
+  id: string;
+  artistId: string;
+  title: string;
+  location: string;
+  date: Date;
+  ticketPrice: number;
+  availableTickets: number | null;
+  artist: {
+    name: string;
+    genre: string | null;
+  };
+}
+
 export const createShow = async (req: Request, res: Response) => {
   try {
     const { title, description, location, date, ticketPrice, availableTickets } = req.body;
@@ -54,97 +68,44 @@ export const createShow = async (req: Request, res: Response) => {
   }
 };
 
-export const getSingleShowById = async (req: Request, res: Response) => {
-  try {
-    const showId = req.params.id;
-    const showRepository = new ShowRepository();
-
-    const show = await showRepository.findOne({
-      where: { id: showId },
-      relations: ['artist', 'rsvps']
-    });
-
-    if (!show) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({
-        message: 'Show not found'
-      });
-    }
-
-    const responseData = {
-      id: show.id,
-      title: show.title,
-      description: show.description,
-      location: show.location,
-      date: show.date,
-      ticketPrice: show.ticketPrice,
-      availableTickets: show.availableTickets,
-      artist: {
-        id: show.artist.id,
-        name: show.artist.name,
-        genre: show.artist.genre,
-        bio: show.artist.bio
-      },
-      rsvpCount: show.rsvps.length,
-      createdAt: show.createdAt,
-      updatedAt: show.updatedAt
-    };
-
-    return res.json({
-      message: 'Show details fetched successfully',
-      data: responseData
-    });
-  } catch (error) {
-    logger.error(error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      message: 'Internal server error'
-    });
-  }
-};
-
 export const getAllShows = async (req: Request, res: Response): Promise<void> => {
   try {
     const showRepo = new ShowRepository();
     const artistRepo = new ArtistRepository();
 
-    const { page: pageNum, limit: limitNum } = getPaginationParams(req.query);
-    const { artistId, from, to } = req.query;
+    const { page = '1', limit = '10', artistId, from, to } = req.query;
+    const pageNum = parseInt(page as string, 10);
+    const limitNum = parseInt(limit as string, 10);
 
-    const filters: FindOptionsWhere<ShowEntity> = {};
-
-    if (artistId) {
-      const artistExists = await artistRepo.findById(artistId as string);
-      if (!artistExists) {
-        res.status(HTTP_STATUS.NOT_FOUND).json({ message: 'Artist not found' });
-        return;
-      }
-      filters.artist = { id: artistId as string };
+    if (isInvalidPagination(pageNum, limitNum)) {
+      res.status(400).json({ message: 'Invalid pagination parameters' });
+      return;
     }
 
-    if (from && to) {
-      filters.date = Between(new Date(from as string), new Date(to as string));
-    } else if (from) {
-      filters.date = MoreThanOrEqual(new Date(from as string));
-    } else if (to) {
-      filters.date = LessThanOrEqual(new Date(to as string));
-    }
+    const filters = await buildFilters({
+      artistRepo,
+      artistId: artistId as string,
+      from: from as string,
+      to: to as string,
+      res
+    });
 
-    const [shows, totalItems] = await showRepo.findAndCount(filters, pageNum, limitNum);
+    if (!filters) return;
 
-    const formatted = shows.map((show) => ({
-      id: show.id,
-      artistId: show.artist.id,
-      title: show.title,
-      location: show.location,
-      date: show.date,
-      ticketPrice: show.ticketPrice,
-      availableTickets: show.availableTickets,
-      artist: {
-        name: show.artist.name,
-        genre: show.artist.genre
-      }
-    }));
+    const repository = showRepo.getRepository();
+    const totalItems = await repository.count({ where: filters });
 
-    res.json({
+    const shows = await repository.find({
+      where: filters,
+      relations: ['artist'],
+      order: { date: 'ASC' },
+      skip: (pageNum - 1) * limitNum,
+      take: limitNum
+    });
+
+    const formatted: FormattedShow[] = shows.map((show: ShowEntity) => formatShow(show));
+
+    res.status(200).json({
       message: 'Shows fetched successfully',
       data: {
         items: formatted,
@@ -157,6 +118,103 @@ export const getAllShows = async (req: Request, res: Response): Promise<void> =>
     });
   } catch (error) {
     logger.error('Error fetching shows:', error);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ message: 'Server error' });
+  }
+};
+
+const isInvalidPagination = (pageNum: number, limitNum: number): boolean =>
+  isNaN(pageNum) || isNaN(limitNum) || pageNum < 1 || limitNum < 1;
+
+interface BuildFiltersParams {
+  artistRepo: ArtistRepository;
+  artistId?: string;
+  from?: string;
+  to?: string;
+  res?: Response;
+}
+
+const buildFilters = async ({
+  artistRepo,
+  artistId,
+  from,
+  to,
+  res
+}: BuildFiltersParams): Promise<FindOptionsWhere<ShowEntity> | null> => {
+  const filters: FindOptionsWhere<ShowEntity> = {};
+
+  if (artistId) {
+    const artistExists = await artistRepo.findById(artistId);
+    if (!artistExists) {
+      res?.status(400).json({ message: 'Artist not found' });
+      return null;
+    }
+    filters.artist = { id: artistId };
+  }
+
+  if (from && to) filters.date = Between(new Date(from), new Date(to));
+  else if (from) filters.date = MoreThanOrEqual(new Date(from));
+  else if (to) filters.date = LessThanOrEqual(new Date(to));
+
+  return filters;
+};
+
+const formatShow = (show: ShowEntity): FormattedShow => ({
+  id: show.id,
+  artistId: show.artist.id,
+  title: show.title,
+  location: show.location,
+  date: show.date,
+  ticketPrice: show.ticketPrice ?? 0,
+  availableTickets: show.availableTickets ?? null,
+  artist: {
+    name: show.artist.name,
+    genre: show.artist.genre.join(', ')
+  }
+});
+
+export const deleteShow = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const user = req.user!;
+
+    const uuidV4Regex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidV4Regex.test(id)) {
+      res.status(HTTP_STATUS.BAD_REQUEST).json({ message: 'Invalid show id' });
+      return;
+    }
+
+    const showRepository = new ShowRepository();
+    const show = await showRepository.findByIdWithRelations(id);
+    if (!show) {
+      res.status(HTTP_STATUS.NOT_FOUND).json({ message: 'Show not found' });
+      return;
+    }
+
+    const isOwner = show.artistId === user.id;
+    const isAdmin = user.role === 'ADMIN';
+    if (!isOwner && !isAdmin) {
+      res.status(HTTP_STATUS.FORBIDDEN).json({ message: 'Forbidden' });
+      return;
+    }
+
+    const hasRsvps = await showRepository.hasRsvpsOrPayments(id);
+    if (hasRsvps) {
+      await showRepository.softCancel(id);
+      res.status(HTTP_STATUS.OK).json({
+        message: 'Show cancelled successfully',
+        data: {
+          id: show.id,
+          title: show.title,
+          isCancelled: true
+        }
+      });
+      return;
+    }
+
+    await showRepository.hardDelete(id);
+    res.status(HTTP_STATUS.OK).json({ message: 'Show deleted successfully' });
+  } catch (error) {
+    logger.error('Error deleting show:', error);
     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ message: 'Server error' });
   }
 };

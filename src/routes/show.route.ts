@@ -1,26 +1,13 @@
 import { Router } from 'express';
 
-import { createRsvp, createShow, getAllShows, getSingleShowById } from '../controllers';
-import {
-  authenticate,
-  authorize,
-  getShowByIdValidation,
-  showValidation,
-  validate
-} from '../middlewares';
+import { createRsvp, createShow, deleteShow, getAllShows } from '../controllers';
+import { authenticate, authorize, showValidation, validate } from '../middlewares';
 
 const router = Router();
 
+router.post('/create', authenticate, authorize(['ARTIST']), showValidation, validate, createShow);
 router.get('/', getAllShows);
-router.post(
-  '/create',
-  authenticate,
-  authorize(['ARTIST', 'ADMIN']),
-  showValidation,
-  validate,
-  createShow
-);
-router.post('/:showId/rsvp', authenticate, authorize(['USER']), createRsvp);
-router.get('/:id', getShowByIdValidation, validate, getSingleShowById);
+router.delete('/:id', authenticate, authorize(['ARTIST', 'ADMIN']), deleteShow);
+router.post('/:showId/rsvp', authenticate, createRsvp);
 
 export default router;
