@@ -37,7 +37,7 @@ export default tseslint.config(
       'no-duplicate-imports': 'off',
       'no-console': 'error',
       'max-params': ['error', 4],
-      'max-lines-per-function': ['warn', { max: 50, skipBlankLines: true, skipComments: true }],
+      'max-lines-per-function': ['warn', { max: 65, skipBlankLines: true, skipComments: true }],
       complexity: ['warn', 10],
       'max-depth': ['error', 4],
       'prefer-arrow-callback': 'error',

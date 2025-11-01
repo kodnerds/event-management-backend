@@ -34,3 +34,20 @@ export const mockShows = {
     availableTickets: 45000
   }
 };
+
+export const mockUsers = {
+  valid: {
+    firstName: 'John',
+    lastName: 'Doe',
+    email: 'john.doe@example.com',
+    password: 'SecurePass123!',
+    role: 'USER'
+  },
+  anotherUser: {
+    firstName: 'Jane',
+    lastName: 'Smith',
+    email: 'jane.smith@example.com',
+    password: 'AnotherPass456@',
+    role: 'USER'
+  }
+};

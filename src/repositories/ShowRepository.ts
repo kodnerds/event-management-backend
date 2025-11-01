@@ -1,7 +1,7 @@
 import { handleGetRepository } from '../database';
 import { ShowEntity } from '../entities/ShowEntity';
 
-import type { FindOneOptions, Repository } from 'typeorm';
+import type { FindOneOptions, FindOptionsWhere, Repository } from 'typeorm';
 
 export class ShowRepository {
   private repository: Repository<ShowEntity>;
