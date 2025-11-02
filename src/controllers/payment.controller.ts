@@ -9,6 +9,7 @@ import logger from '../utils/logger';
 import type { AuthenticatedUser } from '../types';
 import type { Request, Response } from 'express';
 
+// eslint-disable-next-line max-lines-per-function
 export const initiateShowPayment = async (req: Request, res: Response) => {
   try {
     const user = req.user as AuthenticatedUser;

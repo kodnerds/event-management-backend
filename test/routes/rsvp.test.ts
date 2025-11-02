@@ -1,3 +1,4 @@
+import { RsvpStatus } from '../../src/entities';
 import { HTTP_STATUS } from '../../src/utils/const';
 import { TestFactory } from '../factory';
 import { mockArtists, mockShows } from '../mocks/data';
@@ -91,7 +92,7 @@ describe('RSVP routes', () => {
           id: expect.any(String),
           userId,
           showId,
-          status: 'REGISTERED'
+          status: RsvpStatus.REGISTERED
         }
       });
     });
