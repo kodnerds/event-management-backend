@@ -19,6 +19,13 @@ export class ShowRepository {
     return await this.repository.findOne(options);
   }
 
+  async decrementAvailableTickets(show: ShowEntity): Promise<ShowEntity> {
+    if (show.availableTickets! > 0) {
+      show.availableTickets! -= 1;
+    }
+    return await this.repository.save(show);
+  }
+
   async update(id: string, data: Partial<ShowEntity>): Promise<void> {
     await this.repository.update(id, data);
   }

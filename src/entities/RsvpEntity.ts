@@ -10,7 +10,9 @@ import {
   UpdateDateColumn
 } from 'typeorm';
 
-import { PaymentEntity, PaymentStatus } from './PaymentEntity';
+import { PaymentStatus, RsvpStatus } from '../enums';
+
+import { PaymentEntity } from './PaymentEntity';
 import { ShowEntity } from './ShowEntity';
 import { UserEntity } from './UserEntity';
 
@@ -36,19 +38,19 @@ export class RsvpEntity {
 
   @Column({
     type: 'enum',
-    enum: ['REGISTERED', 'CANCELLED'],
-    default: 'REGISTERED'
+    enum: RsvpStatus,
+    default: RsvpStatus.REGISTERED
   })
-  status: 'REGISTERED' | 'CANCELLED';
+  status: RsvpStatus;
 
   @Column({ type: 'enum', enum: PaymentStatus, default: PaymentStatus.PENDING })
   paymentStatus: PaymentStatus;
 
-  @Column()
-  paymentId:string
+  @Column({ type: 'uuid', nullable: true })
+  paymentId?: string;
 
   @OneToOne(() => PaymentEntity, (payment) => payment.rsvp, { nullable: true })
-  @JoinColumn({name:'paymentId'})
+  @JoinColumn({ name: 'paymentId' })
   payment: PaymentEntity | null;
 
   @CreateDateColumn()
