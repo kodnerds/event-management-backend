@@ -2,25 +2,13 @@ import { Between, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 
 import { ArtistRepository, ShowRepository } from '../repositories';
 import { HTTP_STATUS } from '../utils/const';
+import { formatShow } from '../utils/formatShow';
 import logger from '../utils/logger';
 
 import type { ShowEntity } from '../entities/ShowEntity';
+import type { FormattedShow } from '../types';
 import type { Request, Response } from 'express';
 import type { FindOptionsWhere } from 'typeorm';
-
-interface FormattedShow {
-  id: string;
-  artistId: string;
-  title: string;
-  location: string;
-  date: Date;
-  ticketPrice: number;
-  availableTickets: number | null;
-  artist: {
-    name: string;
-    genre: string | null;
-  };
-}
 
 export const createShow = async (req: Request, res: Response) => {
   try {
@@ -144,7 +132,7 @@ const buildFilters = async ({
   if (artistId) {
     const artistExists = await artistRepo.findById(artistId);
     if (!artistExists) {
-      res?.status(400).json({ message: 'Artist not found' });
+      res?.status(HTTP_STATUS.BAD_REQUEST).json({ message: 'Artist not found' });
       return null;
     }
     filters.artist = { id: artistId };
@@ -156,20 +144,6 @@ const buildFilters = async ({
 
   return filters;
 };
-
-const formatShow = (show: ShowEntity): FormattedShow => ({
-  id: show.id,
-  artistId: show.artist.id,
-  title: show.title,
-  location: show.location,
-  date: show.date,
-  ticketPrice: show.ticketPrice ?? 0,
-  availableTickets: show.availableTickets ?? null,
-  artist: {
-    name: show.artist.name,
-    genre: show.artist.genre.join(', ')
-  }
-});
 
 export const deleteShow = async (req: Request, res: Response): Promise<void> => {
   try {

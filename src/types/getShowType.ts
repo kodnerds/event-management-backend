@@ -1,9 +1,11 @@
+import type { ArtistRepository } from '../repositories';
+
 export type GetShowType = {
   date?: Date;
   artistId?: string;
 };
 
-export type FormattedShow {
+export type FormattedShow = {
   id: string;
   artistId: string;
   title: string;
@@ -15,4 +17,12 @@ export type FormattedShow {
     name: string;
     genre: string | null;
   };
-}
+};
+
+export type BuildFiltersType = {
+  artistRepo: ArtistRepository;
+  artistId?: string;
+  from?: string;
+  to?: string;
+  res?: Response;
+};
