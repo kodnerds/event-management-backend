@@ -1,7 +1,7 @@
 import { handleGetRepository } from '../database';
 import { ShowEntity } from '../entities/ShowEntity';
 
-import type { FindOneOptions, FindOptionsWhere, Repository } from 'typeorm';
+import type { FindOneOptions, Repository } from 'typeorm';
 
 export class ShowRepository {
   private repository: Repository<ShowEntity>;
@@ -36,7 +36,6 @@ export class ShowRepository {
   }
 
   async hasRsvpsOrPayments(id: string): Promise<boolean> {
-    // Payments not yet implemented; check RSVPs only
     const show = await this.repository.findOne({ where: { id }, relations: ['rsvps'] });
     return !!show && Array.isArray(show.rsvps) && show.rsvps.length > 0;
   }

@@ -2,7 +2,6 @@ import { Between, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 
 import { ArtistRepository, ShowRepository } from '../repositories';
 import { HTTP_STATUS } from '../utils/const';
-import { getPaginationParams } from '../utils/getPaginationParams';
 import logger from '../utils/logger';
 
 import type { ShowEntity } from '../entities/ShowEntity';
