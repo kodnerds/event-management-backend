@@ -3,6 +3,7 @@ import { Router } from 'express';
 import {
   createRsvp,
   createShow,
+  deleteShow,
   getAllShows,
   getRsvpForShow,
   getSingleShowById
@@ -35,6 +36,14 @@ router.get(
   getShowByIdValidation,
   validate,
   getRsvpForShow
+);
+router.delete(
+  '/:id',
+  authenticate,
+  authorize(['ARTIST', 'ADMIN']),
+  getShowByIdValidation,
+  validate,
+  deleteShow
 );
 
 export default router;

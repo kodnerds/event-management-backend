@@ -36,4 +36,16 @@ export class ShowRepository {
       take: limit
     });
   }
+
+  async countRsvps(showId: string): Promise<number> {
+    const show = await this.repository.findOne({
+      where: { id: showId },
+      relations: ['rsvps']
+    });
+    return show?.rsvps.length ?? 0;
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.repository.delete(id);
+  }
 }

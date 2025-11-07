@@ -11,6 +11,7 @@ const RSVP_ROUTE = (showId: string) => `/shows/${showId}/rsvp`;
 const GET_RSVP = (id: string) => `/shows/${id}/rsvps`;
 const CREATE_USER_ROUTE = '/users/signup';
 const GET_SHOWS_ROUTE = '/shows';
+const DELETE_SHOW_ROUTE = (showId: string) => `/shows/${showId}`;
 
 describe('Show routes', () => {
   const factory = new TestFactory();
@@ -450,6 +451,90 @@ describe('Show routes', () => {
 
       expect(existResponse.body).toEqual({
         message: 'No RSVPs found for this show'
+      });
+    });
+  });
+
+  describe('DELETE /shows/:id', () => {
+    it('should successfully delete a show with no RSVPs', async () => {
+      const { showId, artistToken } = await createArtistAndShow();
+
+      const response = await factory.app
+        .delete(DELETE_SHOW_ROUTE(showId))
+        .set('Authorization', `Bearer ${artistToken}`)
+        .expect(HTTP_STATUS.OK);
+
+      expect(response.body).toEqual({
+        message: 'Show deleted successfully',
+        data: {
+          id: showId,
+          title: mockShows.valid.title
+        }
+      });
+
+      // Verify show was deleted
+      await factory.app.get(`/shows/${showId}`).expect(HTTP_STATUS.NOT_FOUND);
+    });
+
+    it('should cancel a show with RSVPs instead of deleting it', async () => {
+      const { showId, artistToken } = await createArtistAndShow();
+      const { userToken } = await createUser();
+
+      // Create an RSVP
+      await factory.app
+        .post(RSVP_ROUTE(showId))
+        .set('Authorization', `Bearer ${userToken}`)
+        .expect(HTTP_STATUS.CREATED);
+
+      // Attempt to delete the show
+      const response = await factory.app
+        .delete(DELETE_SHOW_ROUTE(showId))
+        .set('Authorization', `Bearer ${artistToken}`)
+        .expect(HTTP_STATUS.OK);
+
+      expect(response.body).toMatchObject({
+        message: 'Show cancelled successfully',
+        data: {
+          id: showId,
+          title: mockShows.valid.title,
+          isCancelled: true
+        }
+      });
+
+      // Verify show still exists
+      const getResponse = await factory.app.get(`/shows/${showId}`).expect(HTTP_STATUS.OK);
+      expect(getResponse.body.data).toBeDefined();
+    });
+
+    it('should return 403 when a non-owner artist tries to delete a show', async () => {
+      const { showId } = await createArtistAndShow();
+
+      // Create another artist
+      const otherArtistRes = await factory.app
+        .post(CREATE_ARTIST_ROUTE)
+        .send({ ...mockArtists.valid, email: 'other@test.com', name: 'Other Artist' })
+        .expect(HTTP_STATUS.CREATED);
+      const otherArtistToken = generateTestAuthToken(otherArtistRes.body.data);
+
+      const response = await factory.app
+        .delete(DELETE_SHOW_ROUTE(showId))
+        .set('Authorization', `Bearer ${otherArtistToken}`)
+        .expect(HTTP_STATUS.FORBIDDEN);
+
+      expect(response.body).toEqual({
+        message: 'Forbidden: You do not have permission to delete this show'
+      });
+    });
+
+    it('should return 401 when no authorization token is provided', async () => {
+      const { showId } = await createArtistAndShow();
+
+      const response = await factory.app
+        .delete(DELETE_SHOW_ROUTE(showId))
+        .expect(HTTP_STATUS.UNAUTHORIZED);
+
+      expect(response.body).toEqual({
+        message: 'User is not authorized or token is missing'
       });
     });
   });

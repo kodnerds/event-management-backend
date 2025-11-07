@@ -160,3 +160,61 @@ export const getAllShows = async (req: Request, res: Response): Promise<void> =>
     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ message: 'Server error' });
   }
 };
+
+export const deleteShow = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const showId = req.params.id;
+    const user = req.user!;
+    const showRepository = new ShowRepository();
+
+    const show = await showRepository.findOne({
+      where: { id: showId },
+      relations: ['artist']
+    });
+
+    if (!show) {
+      res.status(HTTP_STATUS.NOT_FOUND).json({
+        message: 'Show not found'
+      });
+      return;
+    }
+
+    if (user.role !== 'ADMIN' && show.artistId !== user.id) {
+      res.status(HTTP_STATUS.FORBIDDEN).json({
+        message: 'Forbidden: You do not have permission to delete this show'
+      });
+      return;
+    }
+
+    const rsvpCount = await showRepository.countRsvps(showId);
+
+    if (rsvpCount > 0) {
+      await showRepository.update(showId, { isCancelled: true });
+
+      res.status(HTTP_STATUS.OK).json({
+        message: 'Show cancelled successfully',
+        data: {
+          id: show.id,
+          title: show.title,
+          isCancelled: true
+        }
+      });
+      return;
+    }
+
+    await showRepository.delete(showId);
+
+    res.send({
+      message: 'Show deleted successfully',
+      data: {
+        id: show.id,
+        title: show.title
+      }
+    });
+  } catch (error) {
+    logger.error('Error deleting show:', error);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      message: 'Internal server error'
+    });
+  }
+};
