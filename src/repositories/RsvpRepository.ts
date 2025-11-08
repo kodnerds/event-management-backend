@@ -1,7 +1,7 @@
 import { handleGetRepository } from '../database';
 import { RsvpEntity } from '../entities';
 
-import type { FindManyOptions, FindOneOptions, Repository } from 'typeorm';
+import type { FindManyOptions, FindOneOptions, Repository, UpdateResult } from 'typeorm';
 
 export class RsvpRepository {
   private repository: Repository<RsvpEntity>;
@@ -22,5 +22,9 @@ export class RsvpRepository {
   async findAndCount(options: FindManyOptions<RsvpEntity>): Promise<[RsvpEntity[], number]> {
     const [records, count] = await this.repository.findAndCount(options);
     return [records, count];
+  }
+
+  async update(id: string, data: Partial<RsvpEntity>): Promise<UpdateResult> {
+    return await this.repository.update(id, data);
   }
 }

@@ -8,6 +8,7 @@ import type { AuthenticatedUser } from '../../src/types';
 const CREATE_SHOW_ROUTE = '/shows/create';
 const CREATE_ARTIST_ROUTE = '/artists/signup';
 const RSVP_ROUTE = (showId: string) => `/shows/${showId}/rsvp`;
+const CANCEL_RSVP_ROUTE = (rsvpId: string) => `/rsvps/${rsvpId}`;
 const GET_RSVP = (id: string) => `/shows/${id}/rsvps`;
 const CREATE_USER_ROUTE = '/users/signup';
 const GET_SHOWS_ROUTE = '/shows';
@@ -536,6 +537,164 @@ describe('Show routes', () => {
       expect(response.body).toEqual({
         message: 'User is not authorized or token is missing'
       });
+    });
+  });
+
+  describe('DELETE /rsvps/:id', () => {
+    it('should successfully cancel an RSVP and increment available tickets', async () => {
+      const showWithLimitedTickets = {
+        ...mockShows.valid,
+        title: 'Limited Tickets Show for Cancel',
+        availableTickets: 10
+      };
+      const { showId } = await createArtistAndShow(showWithLimitedTickets);
+      const { userToken } = await createUser();
+
+      // Create RSVP
+      const rsvpRes = await factory.app
+        .post(RSVP_ROUTE(showId))
+        .set('Authorization', `Bearer ${userToken}`)
+        .expect(HTTP_STATUS.CREATED);
+
+      const rsvpId = rsvpRes.body.data.id;
+
+      // Cancel RSVP
+      const cancelRes = await factory.app
+        .delete(CANCEL_RSVP_ROUTE(rsvpId))
+        .set('Authorization', `Bearer ${userToken}`)
+        .expect(HTTP_STATUS.OK);
+
+      expect(cancelRes.body).toMatchObject({
+        message: 'RSVP cancelled successfully',
+        data: {
+          id: rsvpId,
+          showId,
+          status: 'CANCELLED'
+        }
+      });
+
+      // Verify tickets incremented
+      const showRes = await factory.app.get(`/shows/${showId}`).expect(HTTP_STATUS.OK);
+      expect(showRes.body.data.availableTickets).toBe(10);
+    });
+
+    it('should handle authorization and validation errors correctly', async () => {
+      const { showId } = await createArtistAndShow();
+      const { userToken: user1Token } = await createUser();
+      const { userToken: user2Token } = await createUser(mockUsers.anotherUser);
+
+      // User 1 creates RSVP
+      const rsvpRes = await factory.app
+        .post(RSVP_ROUTE(showId))
+        .set('Authorization', `Bearer ${user1Token}`)
+        .expect(HTTP_STATUS.CREATED);
+
+      const rsvpId = rsvpRes.body.data.id;
+
+      // Unauthorized user tries to cancel
+      const unauthorizedRes = await factory.app
+        .delete(CANCEL_RSVP_ROUTE(rsvpId))
+        .set('Authorization', `Bearer ${user2Token}`)
+        .expect(HTTP_STATUS.FORBIDDEN);
+
+      expect(unauthorizedRes.body).toEqual({
+        message: 'You are not authorized to cancel this RSVP'
+      });
+
+      // Invalid RSVP ID format
+      const invalidIdRes = await factory.app
+        .delete(CANCEL_RSVP_ROUTE('invalid-id'))
+        .set('Authorization', `Bearer ${user1Token}`)
+        .expect(HTTP_STATUS.BAD_REQUEST);
+
+      expect(invalidIdRes.body).toHaveProperty('message', 'Validation error');
+
+      // Non-existent RSVP
+      const nonExistentRsvpId = '550e8400-e29b-41d4-a716-446655440000';
+      const notFoundRes = await factory.app
+        .delete(CANCEL_RSVP_ROUTE(nonExistentRsvpId))
+        .set('Authorization', `Bearer ${user1Token}`)
+        .expect(HTTP_STATUS.NOT_FOUND);
+
+      expect(notFoundRes.body).toEqual({
+        message: 'RSVP not found'
+      });
+    });
+
+    it('should prevent duplicate cancellations and allow re-registration', async () => {
+      const { showId } = await createArtistAndShow();
+      const { userToken } = await createUser();
+
+      // Create RSVP
+      const rsvpRes = await factory.app
+        .post(RSVP_ROUTE(showId))
+        .set('Authorization', `Bearer ${userToken}`)
+        .expect(HTTP_STATUS.CREATED);
+
+      const rsvpId = rsvpRes.body.data.id;
+
+      // Cancel RSVP
+      await factory.app
+        .delete(CANCEL_RSVP_ROUTE(rsvpId))
+        .set('Authorization', `Bearer ${userToken}`)
+        .expect(HTTP_STATUS.OK);
+
+      // Try to cancel again
+      const duplicateCancelRes = await factory.app
+        .delete(CANCEL_RSVP_ROUTE(rsvpId))
+        .set('Authorization', `Bearer ${userToken}`)
+        .expect(HTTP_STATUS.BAD_REQUEST);
+
+      expect(duplicateCancelRes.body).toEqual({
+        message: 'RSVP is already cancelled'
+      });
+
+      // RSVP again (should succeed and reuse same ID)
+      const newRsvpRes = await factory.app
+        .post(RSVP_ROUTE(showId))
+        .set('Authorization', `Bearer ${userToken}`)
+        .expect(HTTP_STATUS.CREATED);
+
+      expect(newRsvpRes.body).toMatchObject({
+        message: 'RSVP successful',
+        data: {
+          id: rsvpId,
+          showId,
+          status: 'REGISTERED'
+        }
+      });
+    });
+
+    it('should exclude cancelled RSVPs from RSVP count', async () => {
+      const { showId } = await createArtistAndShow();
+      const { userToken: user1Token } = await createUser();
+      const { userToken: user2Token } = await createUser(mockUsers.anotherUser);
+
+      // User 1 RSVPs
+      const rsvp1Res = await factory.app
+        .post(RSVP_ROUTE(showId))
+        .set('Authorization', `Bearer ${user1Token}`)
+        .expect(HTTP_STATUS.CREATED);
+
+      // User 2 RSVPs
+      await factory.app
+        .post(RSVP_ROUTE(showId))
+        .set('Authorization', `Bearer ${user2Token}`)
+        .expect(HTTP_STATUS.CREATED);
+
+      // Verify RSVP count is 2
+      let showRes = await factory.app.get(`/shows/${showId}`).expect(HTTP_STATUS.OK);
+      expect(showRes.body.data.rsvpCount).toBe(2);
+
+      // User 1 cancels
+      await factory.app
+        .delete(CANCEL_RSVP_ROUTE(rsvp1Res.body.data.id))
+        .set('Authorization', `Bearer ${user1Token}`)
+        .expect(HTTP_STATUS.OK);
+
+      // Verify RSVP count is now 1 (cancelled RSVPs not counted)
+      showRes = await factory.app.get(`/shows/${showId}`).expect(HTTP_STATUS.OK);
+      expect(showRes.body.data.rsvpCount).toBe(1);
     });
   });
 });
