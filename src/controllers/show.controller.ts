@@ -70,6 +70,8 @@ export const getSingleShowById = async (req: Request, res: Response) => {
       });
     }
 
+    const registeredRsvps = show.rsvps.filter((rsvp) => rsvp.status === 'REGISTERED');
+
     const responseData = {
       id: show.id,
       title: show.title,
@@ -84,7 +86,7 @@ export const getSingleShowById = async (req: Request, res: Response) => {
         genre: show.artist.genre,
         bio: show.artist.bio
       },
-      rsvpCount: show.rsvps.length,
+      rsvpCount: registeredRsvps.length,
       createdAt: show.createdAt,
       updatedAt: show.updatedAt
     };

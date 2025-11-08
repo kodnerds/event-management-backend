@@ -1,4 +1,4 @@
-import { ArtistRepository, RsvpRepository, ShowRepository } from '../repositories';
+import { RsvpRepository, ShowRepository } from '../repositories';
 import { HTTP_STATUS } from '../utils/const';
 import { getPaginationParams } from '../utils/getPaginationParams';
 import logger from '../utils/logger';
@@ -39,7 +39,8 @@ export const createRsvp = async (req: Request, res: Response) => {
       where: { userId: user.id, showId }
     });
 
-    if (existingRsvp) {
+    // Only prevent RSVP if there's an active (REGISTERED) RSVP
+    if (existingRsvp?.status === 'REGISTERED') {
       return res.status(HTTP_STATUS.CONFLICT).json({
         message: 'User already registered for this show'
       });
@@ -51,6 +52,22 @@ export const createRsvp = async (req: Request, res: Response) => {
       });
     }
 
+    // If there's a cancelled RSVP, update it to REGISTERED instead of creating a new one
+    if (existingRsvp?.status === 'CANCELLED') {
+      await rsvpRepository.update(existingRsvp.id, { status: 'REGISTERED' });
+
+      return res.status(HTTP_STATUS.CREATED).json({
+        message: 'RSVP successful',
+        data: {
+          id: existingRsvp.id,
+          userId: existingRsvp.userId,
+          showId: existingRsvp.showId,
+          status: 'REGISTERED'
+        }
+      });
+    }
+
+    // Create new RSVP
     const newRsvp = await rsvpRepository.create({
       userId: user.id,
       showId,
@@ -88,7 +105,7 @@ export const getRsvpForShow = async (req: Request, res: Response) => {
         relations: ['artist']
       }),
       rsvpRepository.findAndCount({
-        where: { show: { id: showId } },
+        where: { show: { id: showId }, status: 'REGISTERED' },
         relations: ['user'],
         skip: offset,
         take: limit,
@@ -129,47 +146,59 @@ export const getRsvpForShow = async (req: Request, res: Response) => {
 
 export const cancelRsvp = async (req: Request, res: Response) => {
   try {
-    const { showId } = req.params;
+    const { id } = req.params;
     const user = req.user!;
 
     const showRepository = new ShowRepository();
     const rsvpRepository = new RsvpRepository();
 
     const existingRsvp = await rsvpRepository.findOne({
-      where: { userId: user.id, showId },
+      where: { id }
     });
 
-    if (!existingRsvp || existingRsvp.status === 'CANCELLED') {
+    if (!existingRsvp) {
       return res.status(HTTP_STATUS.NOT_FOUND).json({
-        message: 'RSVP not found or already cancelled',
+        message: 'RSVP not found'
       });
     }
 
-    await rsvpRepository.update(showId, { status: 'CANCELLED' });
+    if (existingRsvp.status === 'CANCELLED') {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        message: 'RSVP is already cancelled'
+      });
+    }
 
+    if (existingRsvp.userId !== user.id && user.role !== 'ADMIN') {
+      return res.status(HTTP_STATUS.FORBIDDEN).json({
+        message: 'You are not authorized to cancel this RSVP'
+      });
+    }
+
+    await rsvpRepository.update(id, { status: 'CANCELLED' });
+
+    // Increment available tickets if the show has a ticket limit
     const show = await showRepository.findOne({
-      where: { id: showId },
-      relations: ['artist'],
-     });
+      where: { id: existingRsvp.showId }
+    });
+
     if (show && typeof show.availableTickets === 'number') {
-      await showRepository.update(showId, {
-        availableTickets: show.availableTickets + 1,
+      await showRepository.update(existingRsvp.showId, {
+        availableTickets: show.availableTickets + 1
       });
     }
 
     return res.status(HTTP_STATUS.OK).json({
       message: 'RSVP cancelled successfully',
       data: {
-        showId,
-        availableTickets: show?.availableTickets ?? 0,
-        status: existingRsvp.status,
-      },
+        id: existingRsvp.id,
+        showId: existingRsvp.showId,
+        status: 'CANCELLED'
+      }
     });
   } catch (error) {
     logger.error('Error cancelling RSVP', error);
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      message: 'Server error',
+      message: 'Server error'
     });
   }
 };
-
